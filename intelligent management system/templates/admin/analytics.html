@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+
+{% block title %}Workforce Macro Analytics | Admin{% endblock %}
+{% block page_title %}Organization Workforce Analytics{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 24px;">
+    <h2 style="font-size: 24px; font-weight: 800;">Workforce Intelligence & Analytical Insights</h2>
+    <p style="font-size: 13px; color: var(--text-muted);">Macro organizational metrics powered by database aggregation and analytical modeling.</p>
+</div>
+
+<!-- 4 Analytics Chart Matrix -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 30px;">
+    <!-- 1. Attendance Trajectory -->
+    <div class="card-3d">
+        <div class="card-gradient-top"></div>
+        <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 16px;">
+            <i class="fas fa-calendar-check text-emerald-500 mr-2"></i> Attendance & Presence Trends
+        </h3>
+        <div style="height: 260px; position: relative;">
+            <canvas id="analyticsAttendanceChart"></canvas>
+        </div>
+    </div>
+
+    <!-- 2. Task Pipeline Status -->
+    <div class="card-3d">
+        <div class="card-gradient-top"></div>
+        <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 16px;">
+            <i class="fas fa-chart-pie text-blue-500 mr-2"></i> Task Completion & Health Distribution
+        </h3>
+        <div style="height: 260px; position: relative;">
+            <canvas id="analyticsTaskStatusChart"></canvas>
+        </div>
+    </div>
+
+    <!-- 3. Role Allocation -->
+    <div class="card-3d">
+        <div class="card-gradient-top"></div>
+        <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 16px;">
+            <i class="fas fa-users-rays text-purple-500 mr-2"></i> Staff Allocation by Operational Role
+        </h3>
+        <div style="height: 260px; position: relative;">
+            <canvas id="analyticsRoleChart"></canvas>
+        </div>
+    </div>
+
+    <!-- 4. Leave Distribution -->
+    <div class="card-3d">
+        <div class="card-gradient-top"></div>
+        <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 16px;">
+            <i class="fas fa-umbrella-beach text-pink-500 mr-2"></i> Time-Off & Leave Request Outcomes
+        </h3>
+        <div style="height: 260px; position: relative;">
+            <canvas id="analyticsLeaveChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Skills Inventory & Coverage -->
+<div class="card-3d">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+        <div>
+            <h3 style="font-size: 18px; font-weight: 800;"><i class="fas fa-microchip text-indigo-500 mr-2"></i> Technical Skills Repository</h3>
+            <p style="font-size: 12px; color: var(--text-muted);">Catalog of monitored competencies and active workforce proficiency levels.</p>
+        </div>
+        <span class="badge badge-purple">{{ skills|length }} Registered Competencies</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;">
+        {% for s in skills %}
+            <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                    <div style="font-weight: 800; font-size: 15px; color: var(--text-main);">{{ s.name }}</div>
+                    <span class="badge badge-secondary" style="font-size: 10px;">{{ s.category }}</span>
+                </div>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; min-height: 36px;">
+                    {{ s.description or 'Technical competency tracked for task dispatching.' }}
+                </p>
+                <div style="display: flex; justify-content: space-between; font-size: 12px; padding-top: 10px; border-top: 1px solid var(--border-light);">
+                    <span><strong style="color: var(--primary);">{{ s.employee_skills|length }}</strong> Skilled Staff</span>
+                    <span><strong style="color: var(--royal-purple);">{{ s.tasks|length }}</strong> Active Tasks</span>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Attendance Chart
+    const attCanvas = document.getElementById('analyticsAttendanceChart');
+    if (attCanvas) {
+        new Chart(attCanvas, {
+            type: 'line',
+            data: {
+                labels: {{ analytics.attendance_trend.dates | tojson }},
+                datasets: [
+                    {
+                        label: 'Present Employees',
+                        data: {{ analytics.attendance_trend.present | tojson }},
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Late Check-ins',
+                        data: {{ analytics.attendance_trend.late | tojson }},
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } }
+            }
+        });
+    }
+
+    // 2. Task Status Chart
+    const taskCanvas = document.getElementById('analyticsTaskStatusChart');
+    if (taskCanvas) {
+        new Chart(taskCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: {{ analytics.task_status_distribution.labels | tojson }},
+                datasets: [{
+                    data: {{ analytics.task_status_distribution.counts | tojson }},
+                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#64748b']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right' } },
+                cutout: '65%'
+            }
+        });
+    }
+
+    // 3. Role Allocation Chart
+    const roleCanvas = document.getElementById('analyticsRoleChart');
+    if (roleCanvas) {
+        new Chart(roleCanvas, {
+            type: 'pie',
+            data: {
+                labels: {{ analytics.role_distribution.labels | tojson }},
+                datasets: [{
+                    data: {{ analytics.role_distribution.counts | tojson }},
+                    backgroundColor: ['#ec4899', '#8b5cf6', '#3b82f6', '#10b981']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right' } }
+            }
+        });
+    }
+
+    // 4. Leave Outcomes Chart
+    const leaveCanvas = document.getElementById('analyticsLeaveChart');
+    if (leaveCanvas) {
+        new Chart(leaveCanvas, {
+            type: 'bar',
+            data: {
+                labels: {{ analytics.leave_distribution.labels | tojson }},
+                datasets: [{
+                    label: 'Requests',
+                    data: {{ analytics.leave_distribution.counts | tojson }},
+                    backgroundColor: ['#f59e0b', '#10b981', '#ef4444'],
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { ticks: { stepSize: 1 } } }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

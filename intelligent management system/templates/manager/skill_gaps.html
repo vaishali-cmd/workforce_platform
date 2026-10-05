@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Skill & Resource Gap Intelligence | Manager{% endblock %}
+{% block page_title %}Resource & Skill Gap Detection{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 24px;">
+    <h2 style="font-size: 24px; font-weight: 800;">Strategic Skill Deficit Detection</h2>
+    <p style="font-size: 13px; color: var(--text-muted);">
+        Rule-based capacity intelligence comparing active incomplete task skill requirements against qualified workforce headcount.
+    </p>
+</div>
+
+<!-- Standout Explanation Card -->
+<div class="intelligence-card intelligence-card-info" style="margin-bottom: 24px;">
+    <i class="fas fa-circle-info intelligence-icon"></i>
+    <div>
+        <div class="intelligence-title">How Skill Gaps Are Calculated</div>
+        <div class="intelligence-desc">
+            <strong>Active Demand:</strong> The number of uncompleted tasks requiring a specific technical skill.<br>
+            <strong>Available Supply:</strong> The number of active employees possessing that verified skill.<br>
+            If <em>Demand &gt; Supply</em> or <em>Demand &ge; 1 with 0 available staff</em>, the system flags a <strong>Skill Gap</strong> for executive hiring or training prioritization.
+        </div>
+    </div>
+</div>
+
+<div class="card-3d" style="padding: 0; overflow: hidden;">
+    <div class="table-container" style="border: none;">
+        <table class="saas-table">
+            <thead>
+                <tr>
+                    <th>Tracked Competency</th>
+                    <th>Category</th>
+                    <th>Active Task Demand</th>
+                    <th>Available Staff</th>
+                    <th>Deficit / Surplus</th>
+                    <th>Diagnostic Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for g in skill_gaps %}
+                    <tr style="background: {{ '#fff1f2' if g.status == 'Critical Gap' else ('#fffbeb' if g.status == 'Skill Gap' else '') }};">
+                        <td>
+                            <div style="font-weight: 700; font-size: 14px; color: var(--text-main);">
+                                {{ g.skill.name }}
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted);">
+                                {{ g.skill.description or '' }}
+                            </div>
+                        </td>
+                        <td><span class="badge badge-secondary">{{ g.skill.category }}</span></td>
+                        <td>
+                            <strong style="color: {{ 'var(--danger)' if g.demand > 0 else 'var(--text-muted)' }}; font-size: 14px;">
+                                {{ g.demand }} task(s)
+                            </strong>
+                        </td>
+                        <td>
+                            <strong style="color: {{ 'var(--success-dark)' if g.supply > 0 else 'var(--danger)' }}; font-size: 14px;">
+                                {{ g.supply }} employee(s)
+                            </strong>
+                        </td>
+                        <td>
+                            {% if g.deficit > 0 %}
+                                <span style="color: var(--danger); font-weight: 800; font-family: monospace;">-{{ g.deficit }} deficit</span>
+                            {% elif g.deficit < 0 %}
+                                <span style="color: var(--success-dark); font-weight: 700; font-family: monospace;">+{{ -g.deficit }} surplus</span>
+                            {% else %}
+                                <span style="color: var(--text-muted); font-family: monospace;">0 balanced</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge {{ g.badge_class }}">
+                                {{ g.status }}
+                            </span>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

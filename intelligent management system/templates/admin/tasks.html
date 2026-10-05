@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Org-Wide Task Directory | Admin{% endblock %}
+{% block page_title %}Organization Tasks & Deliverables{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+    <div>
+        <h2 style="font-size: 24px; font-weight: 800;">Organization Task Pipeline</h2>
+        <p style="font-size: 13px; color: var(--text-muted);">Inspect project milestones, assignees, progress completion, and deadline alerts across teams.</p>
+    </div>
+
+    <!-- Priority / Status Filter Bar -->
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <a href="{{ url_for('admin.tasks') }}" class="btn btn-sm {{ 'btn-primary' if not priority_filter and not status_filter else 'btn-outline' }}">All Tasks</a>
+        <a href="{{ url_for('admin.tasks', priority='Critical') }}" class="btn btn-sm {{ 'btn-primary' if priority_filter == 'Critical' else 'btn-outline' }}">Critical</a>
+        <a href="{{ url_for('admin.tasks', status='In Progress') }}" class="btn btn-sm {{ 'btn-primary' if status_filter == 'In Progress' else 'btn-outline' }}">In Progress</a>
+        <a href="{{ url_for('admin.tasks', status='Completed') }}" class="btn btn-sm {{ 'btn-primary' if status_filter == 'Completed' else 'btn-outline' }}">Completed</a>
+    </div>
+</div>
+
+<div class="card-3d" style="padding: 0; overflow: hidden;">
+    {% if tasks %}
+        <div class="table-container" style="border: none;">
+            <table class="saas-table">
+                <thead>
+                    <tr>
+                        <th>Code & Title</th>
+                        <th>Required Skill</th>
+                        <th>Assignee</th>
+                        <th>Priority</th>
+                        <th>Progress</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in tasks %}
+                        <tr>
+                            <td>
+                                <div style="font-weight: 700; color: var(--text-main);">{{ t.title }}</div>
+                                <div style="font-size: 11px; font-family: monospace; color: var(--royal-purple); font-weight: 700;">{{ t.task_code }}</div>
+                            </td>
+                            <td>
+                                {% if t.required_skill %}
+                                    <span class="badge badge-purple">{{ t.required_skill.name }}</span>
+                                {% else %}
+                                    <span style="font-size: 11px; color: var(--text-subtle);">General</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if t.assignee %}
+                                    <div style="font-weight: 600;">{{ t.assignee.full_name }}</div>
+                                    <div style="font-size: 11px; color: var(--text-muted);">{{ t.team.name if t.team else '' }}</div>
+                                {% else %}
+                                    <span class="badge badge-secondary">Unassigned</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {{ t.priority_badge_class }}">{{ t.priority }}</span>
+                            </td>
+                            <td style="min-width: 140px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; margin-bottom: 4px;">
+                                    <span>{{ t.progress }}%</span>
+                                </div>
+                                <div class="progress-track" style="height: 6px;">
+                                    <div class="progress-fill {{ 'progress-fill-success' if t.progress == 100 else ('progress-fill-danger' if t.priority == 'Critical' else '') }}" style="width: {{ t.progress }}%;"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <div style="font-weight: 600; {{ 'color: var(--danger);' if t.is_overdue else '' }}">
+                                    {{ t.due_date | format_date('%d %b %Y') }}
+                                </div>
+                                {% if t.is_deadline_risk %}
+                                    <span class="badge badge-danger" style="font-size: 9px; padding: 1px 6px;">At Risk</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {{ t.status_badge_class }}">{{ t.status }}</span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 48px; color: var(--text-muted);">
+            <i class="fas fa-tasks" style="font-size: 36px; margin-bottom: 12px; display: block; color: var(--text-subtle);"></i>
+            <h4>No tasks found matching criteria.</h4>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

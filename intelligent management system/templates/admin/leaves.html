@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Leave Management | HR Admin{% endblock %}
+{% block page_title %}Organization Leave Directory{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+    <div>
+        <h2 style="font-size: 24px; font-weight: 800;">Organization Leave Records</h2>
+        <p style="font-size: 13px; color: var(--text-muted);">Review historical time-off applications, approval audit logs, and conflict analyses.</p>
+    </div>
+
+    <!-- Status Filters -->
+    <div style="display: flex; gap: 8px;">
+        <a href="{{ url_for('admin.leaves') }}" class="btn btn-sm {{ 'btn-primary' if not status_filter else 'btn-outline' }}">All</a>
+        <a href="{{ url_for('admin.leaves', status='Pending') }}" class="btn btn-sm {{ 'btn-primary' if status_filter == 'Pending' else 'btn-outline' }}">Pending</a>
+        <a href="{{ url_for('admin.leaves', status='Approved') }}" class="btn btn-sm {{ 'btn-primary' if status_filter == 'Approved' else 'btn-outline' }}">Approved</a>
+        <a href="{{ url_for('admin.leaves', status='Rejected') }}" class="btn btn-sm {{ 'btn-primary' if status_filter == 'Rejected' else 'btn-outline' }}">Rejected</a>
+    </div>
+</div>
+
+<div class="card-3d" style="padding: 0; overflow: hidden;">
+    {% if leaves %}
+        <div class="table-container" style="border: none;">
+            <table class="saas-table">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Leave Type</th>
+                        <th>Dates & Duration</th>
+                        <th>Reason</th>
+                        <th>Impact Warnings</th>
+                        <th>Status</th>
+                        <th>Reviewed By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for l in leaves %}
+                        <tr>
+                            <td>
+                                <div style="font-weight: 700;">{{ l.applicant.full_name }}</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">{{ l.applicant.department.name if l.applicant.department else '' }}</div>
+                            </td>
+                            <td><span class="badge badge-purple">{{ l.leave_type }}</span></td>
+                            <td>
+                                <div style="font-weight: 600;">{{ l.start_date | format_date('%d %b') }} - {{ l.end_date | format_date('%d %b %Y') }}</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">{{ l.days_count }} business day(s)</div>
+                            </td>
+                            <td style="max-width: 220px; font-size: 12px; color: var(--text-muted);">
+                                {{ l.reason }}
+                            </td>
+                            <td style="max-width: 250px;">
+                                {% if l.impact_warning %}
+                                    <div class="badge badge-warning" style="font-size: 10px; text-align: left; display: inline-block;">
+                                        <i class="fas fa-triangle-exclamation mr-1"></i> Conflict Flagged
+                                    </div>
+                                {% else %}
+                                    <span style="font-size: 11px; color: var(--text-subtle);">None</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {{ l.status_badge_class }}">
+                                    {{ l.status }}
+                                </span>
+                            </td>
+                            <td>
+                                {{ l.reviewer.full_name if l.reviewer else ('Pending Review' if l.status == 'Pending' else 'System') }}
+                                {% if l.rejection_reason %}
+                                    <div style="font-size: 11px; color: var(--danger-dark); margin-top: 2px;">Note: {{ l.rejection_reason }}</div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 48px; color: var(--text-muted);">
+            <i class="fas fa-calendar-check" style="font-size: 36px; margin-bottom: 12px; display: block; color: var(--text-subtle);"></i>
+            <h4>No leave records found matching criteria.</h4>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

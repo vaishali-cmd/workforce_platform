@@ -1,0 +1,13 @@
+{
+  "name": "intelligent-management-system",
+  "version": "1.0.0",
+  "description": "Flask backend with static assets – npm wrapper for dev server",
+  "scripts": {
+    "dev": "python -m flask run"
+  },
+  "author": "ELCOT",
+  "license": "MIT",
+  "main": "index.js",
+  "keywords": [],
+  "type": "commonjs"
+}

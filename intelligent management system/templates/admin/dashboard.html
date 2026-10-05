@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+
+{% block title %}HR & Administration Dashboard | Workforce Intelligence{% endblock %}
+{% block page_title %}HR & Administration Dashboard{% endblock %}
+
+{% block content %}
+<!-- Executive Hero Banner with Dark 3D Aesthetic -->
+<div class="card-3d card-3d-dark" style="padding: 32px 36px; border-radius: var(--radius-xl); margin-bottom: 28px; position: relative;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+        <div style="max-width: 600px;">
+            <span class="badge badge-purple" style="font-size: 11px; margin-bottom: 10px;">
+                <i class="fas fa-shield-halved"></i> HR & People Operations Command
+            </span>
+            <h1 style="font-size: 28px; font-weight: 800; line-height: 1.2; margin-bottom: 8px;">
+                Organization Workforce Intelligence
+            </h1>
+            <p style="font-size: 14px; color: #cbd5e1; line-height: 1.6;">
+                Real-time macro analytics, talent allocation, attendance trends, and human capital operations across all company divisions.
+            </p>
+        </div>
+        <div style="display: flex; gap: 14px;">
+            <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); padding: 16px 22px; border-radius: var(--radius-lg); text-align: center;">
+                <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700;">Operational Health</div>
+                <div style="font-size: 26px; font-weight: 800; font-family: 'Outfit'; color: #34d399;">98.4%</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); padding: 16px 22px; border-radius: var(--radius-lg); text-align: center;">
+                <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700;">Active Staff</div>
+                <div style="font-size: 26px; font-weight: 800; font-family: 'Outfit'; color: #60a5fa;">{{ active_employees }}/{{ total_employees }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 8 Metric KPI Cards Grid -->
+<div class="metrics-grid">
+    <div class="metric-card">
+        <div class="metric-icon-box bg-pink-grad">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="metric-info">
+            <div class="metric-value">{{ total_employees }}</div>
+            <div class="metric-label">Total Employees</div>
+            <div class="metric-trend trend-up"><i class="fas fa-circle-check"></i> {{ active_employees }} Active</div>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon-box bg-blue-grad">
+            <i class="fas fa-building"></i>
+        </div>
+        <div class="metric-info">
+            <div class="metric-value">{{ total_depts }}</div>
+            <div class="metric-label">Departments</div>
+            <div class="metric-trend"><span style="color: var(--royal-purple);">{{ total_teams }} Teams active</span></div>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon-box bg-sunset-grad">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="metric-info">
+            <div class="metric-value">{{ pending_leaves }}</div>
+            <div class="metric-label">Pending Leaves</div>
+            <div class="metric-trend"><a href="{{ url_for('admin.leaves') }}" style="font-size: 11px; font-weight: 700;">View requests &rarr;</a></div>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon-box bg-emerald-grad">
+            <i class="fas fa-user-check"></i>
+        </div>
+        <div class="metric-info">
+            <div class="metric-value">{{ today_present }}</div>
+            <div class="metric-label">Today's Attendance</div>
+            <div class="metric-trend trend-up"><i class="fas fa-arrow-trend-up"></i> Clocked in today</div>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon-box bg-purple-grad">
+            <i class="fas fa-bars-progress"></i>
+        </div>
+        <div class="metric-info">
+            <div class="metric-value">{{ open_tasks }}</div>
+            <div class="metric-label">Open Project Tasks</div>
+            <div class="metric-trend"><span style="color: var(--royal-purple);">In progress / assigned</span></div>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon-box bg-emerald-grad">
+            <i class="fas fa-circle-check"></i>
+        </div>
+        <div class="metric-info">
+            <div class="metric-value">{{ completed_tasks }}</div>
+            <div class="metric-label">Completed Deliverables</div>
+            <div class="metric-trend trend-up"><i class="fas fa-check-double"></i> Verified 100%</div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px;">
+    <!-- Attendance Trend Chart -->
+    <div class="card-3d">
+        <div class="card-gradient-top"></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+            <h3 style="font-size: 16px; font-weight: 800;"><i class="fas fa-chart-column text-indigo-500 mr-2"></i> 7-Day Attendance Trajectory</h3>
+            <span class="badge badge-primary">Live Org Log</span>
+        </div>
+        <div style="height: 250px; position: relative;">
+            <canvas id="attendanceTrendChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Department Headcount Distribution -->
+    <div class="card-3d">
+        <div class="card-gradient-top"></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+            <h3 style="font-size: 16px; font-weight: 800;"><i class="fas fa-chart-pie text-pink-500 mr-2"></i> Talent Distribution by Division</h3>
+            <span class="badge badge-purple">{{ total_depts }} Divisions</span>
+        </div>
+        <div style="height: 250px; position: relative;">
+            <canvas id="deptDistributionChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Data Sections: Recent Leaves & Critical Workflows -->
+<div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px;">
+    <!-- Recent Leave Applications -->
+    <div class="card-3d">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+            <h3 style="font-size: 16px; font-weight: 800;"><i class="fas fa-calendar-days text-amber-500 mr-2"></i> Recent Leave Applications</h3>
+            <a href="{{ url_for('admin.leaves') }}" class="btn btn-sm btn-outline">View All</a>
+        </div>
+        {% if recent_leaves %}
+            <div class="table-container">
+                <table class="saas-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Type</th>
+                            <th>Dates</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for l in recent_leaves %}
+                            <tr>
+                                <td>
+                                    <div style="font-weight: 700;">{{ l.applicant.full_name }}</div>
+                                    <div style="font-size: 11px; color: var(--text-muted);">{{ l.applicant.emp_code }}</div>
+                                </td>
+                                <td><span class="badge badge-purple">{{ l.leave_type }}</span></td>
+                                <td>{{ l.start_date | format_date('%d %b') }} - {{ l.end_date | format_date('%d %b') }}</td>
+                                <td>
+                                    <span class="badge {{ l.status_badge_class }}">
+                                        {{ l.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 30px; color: var(--text-muted);">No recent leave requests.</div>
+        {% endif %}
+    </div>
+
+    <!-- High Priority / Critical Tasks Watchlist -->
+    <div class="card-3d">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+            <h3 style="font-size: 16px; font-weight: 800;"><i class="fas fa-fire-flame-curved text-rose-500 mr-2"></i> Critical Priority Milestones</h3>
+            <a href="{{ url_for('admin.tasks') }}" class="btn btn-sm btn-outline">All Tasks</a>
+        </div>
+        {% if critical_tasks %}
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                {% for t in critical_tasks %}
+                    <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 14px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                            <div style="font-weight: 700; font-size: 13px; color: var(--text-main);">{{ t.title }}</div>
+                            <span class="badge {{ t.priority_badge_class }}">{{ t.priority }}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">
+                            <span>Owner: <strong>{{ t.assignee.full_name if t.assignee else 'Unassigned' }}</strong></span>
+                            <span>Due: <strong>{{ t.due_date | format_date('%d %b') }}</strong></span>
+                        </div>
+                        <div class="progress-track" style="height: 6px;">
+                            <div class="progress-fill" style="width: {{ t.progress }}%;"></div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 30px; color: var(--text-muted);">No critical tasks currently pending.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize Dashboard Charts with database records passed from analytics service
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. Attendance Trend Chart
+        const attCtx = document.getElementById('attendanceTrendChart');
+        if (attCtx) {
+            new Chart(attCtx, {
+                type: 'bar',
+                data: {
+                    labels: {{ analytics.attendance_trend.dates | tojson }},
+                    datasets: [
+                        {
+                            label: 'Present',
+                            data: {{ analytics.attendance_trend.present | tojson }},
+                            backgroundColor: '#10b981',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Late',
+                            data: {{ analytics.attendance_trend.late | tojson }},
+                            backgroundColor: '#f59e0b',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Absent',
+                            data: {{ analytics.attendance_trend.absent | tojson }},
+                            backgroundColor: '#ef4444',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' } } }
+                    },
+                    scales: {
+                        x: { stacked: true, grid: { display: false } },
+                        y: { stacked: true, grid: { color: '#f1f5f9' }, ticks: { stepSize: 1 } }
+                    }
+                }
+            });
+        }
+
+        // 2. Department Headcount Chart
+        const deptCtx = document.getElementById('deptDistributionChart');
+        if (deptCtx) {
+            new Chart(deptCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: {{ analytics.dept_distribution.labels | tojson }},
+                    datasets: [{
+                        data: {{ analytics.dept_distribution.counts | tojson }},
+                        backgroundColor: ['#6366f1', '#ec4899', '#3b82f6', '#10b981', '#f59e0b'],
+                        borderWidth: 3,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' } } }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

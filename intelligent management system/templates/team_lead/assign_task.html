@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+
+{% block title %}Smart Task Dispatch | Team Lead{% endblock %}
+{% block page_title %}Smart Task Assignment &amp; AI Recommendation{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+    <div>
+        <h2 style="font-size: 24px; font-weight: 800;">Smart Task Dispatch Engine</h2>
+        <p style="font-size: 13px; color: var(--text-muted);">Assign deliverables using live skill proficiency scores, deadline proximity, and workload capacity.</p>
+    </div>
+    <a href="{{ url_for('team_lead.tasks') }}" class="btn btn-outline">
+        <i class="fas fa-bars-progress mr-1"></i> View Task Board
+    </a>
+</div>
+
+<div style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px;">
+    <!-- Task Assignment Form -->
+    <div class="card-3d">
+        <div class="card-gradient-top"></div>
+        <h3 style="font-size: 17px; font-weight: 800; margin-bottom: 18px;">
+            <i class="fas fa-clipboard-list text-indigo-500 mr-2"></i> Task Parameters
+        </h3>
+
+        <form method="POST" action="{{ url_for('team_lead.assign_task') }}" id="assignTaskForm">
+            <div class="form-group">
+                <label class="form-label">Task Title <span style="color: var(--danger);">*</span></label>
+                <input type="text" name="title" class="form-control" placeholder="e.g. Optimize Redis Cache Layer &amp; Invalidation Rules" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Task Description</label>
+                <textarea name="description" class="form-control" rows="3" placeholder="Provide implementation requirements, acceptance criteria, and PR expectations..."></textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div class="form-group">
+                    <label class="form-label">Required Skill</label>
+                    <select name="skill_id" id="skillSelect" class="form-control" onchange="updateRecommendations()">
+                        <option value="">-- Any / General Skill --</option>
+                        {% for s in skills %}
+                            <option value="{{ s.id }}" {{ 'selected' if selected_skill and selected_skill | string == s.id | string else '' }}>
+                                {{ s.name }} ({{ s.category }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Priority</label>
+                    <select name="priority" id="prioritySelect" class="form-control" onchange="updateRecommendations()">
+                        <option value="Low" {{ 'selected' if selected_priority == 'Low' else '' }}>Low</option>
+                        <option value="Medium" {{ 'selected' if selected_priority == 'Medium' or not selected_priority else '' }}>Medium</option>
+                        <option value="High" {{ 'selected' if selected_priority == 'High' else '' }}>High</option>
+                        <option value="Critical" {{ 'selected' if selected_priority == 'Critical' else '' }}>Critical</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div class="form-group">
+                    <label class="form-label">Due Date <span style="color: var(--danger);">*</span></label>
+                    <input type="date" name="due_date" id="dueDateInput" class="form-control" value="{{ selected_due }}" required onchange="updateRecommendations()">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Assignee <span style="color: var(--danger);">*</span></label>
+                    <select name="assigned_to" id="assignedToSelect" class="form-control" required>
+                        <option value="">-- Choose Assignee --</option>
+                        {% for m in members %}
+                            <option value="{{ m.id }}">{{ m.full_name }} ({{ m.designation or 'Engineer' }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-top: 10px;">
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 13px; font-weight: 700;">
+                    <i class="fas fa-paper-plane mr-2"></i> Confirm &amp; Dispatch Task
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- AI Candidate Recommendation Showcase -->
+    <div class="card-3d">
+        <div class="card-gradient-top"></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+                <h3 style="font-size: 17px; font-weight: 800;">
+                    <i class="fas fa-brain text-pink-500 mr-2"></i> AI Candidate Scoring
+                </h3>
+                <p style="font-size: 12px; color: var(--text-muted);">Scores evaluate skill match, current workload capacity, and pending deadlines.</p>
+            </div>
+            <span class="badge badge-purple"><i class="fas fa-bolt mr-1"></i> Live Scored</span>
+        </div>
+
+        <div id="recommendationsContainer">
+            {% if recommendations %}
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    {% for rec in recommendations %}
+                        {% set emp = rec.employee %}
+                        <div class="rec-card" style="border: 1px solid {{ 'var(--primary)' if rec.is_recommended else 'var(--border-light)' }}; background: {{ '#f5f3ff' if rec.is_recommended else '#f8fafc' }}; border-radius: var(--radius-md); padding: 14px; transition: var(--transition-fast); cursor: pointer;"
+                            onclick="selectCandidate({{ emp.id }}, '{{ emp.full_name | escape }}')">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div class="user-avatar" style="width: 36px; height: 36px; font-size: 13px;">
+                                        {{ emp.full_name[0] }}
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 700; font-size: 13px; color: var(--text-main);">
+                                            {{ emp.full_name }}
+                                            {% if rec.is_recommended %}
+                                                <span class="badge badge-success" style="font-size: 9px; margin-left: 6px;">Top Match</span>
+                                            {% endif %}
+                                        </div>
+                                        <div style="font-size: 11px; color: var(--text-muted);">
+                                            {{ emp.designation or 'Engineer' }} &bull; {{ emp.emp_code }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 800; font-size: 16px; font-family: Outfit; color: {{ 'var(--success-dark)' if rec.score >= 70 else ('var(--warning-dark)' if rec.score >= 40 else 'var(--danger-dark)') }};">
+                                        {{ rec.score }}/100
+                                    </div>
+                                    <div style="font-size: 10px; color: var(--text-muted);">Fit Score</div>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 14px; font-size: 11px; color: var(--text-muted); margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(0,0,0,0.05);">
+                                <span>Skill: <strong style="color: var(--text-main);">{{ rec.proficiency or 'Unskilled' }}</strong></span>
+                                <span>Workload: <strong style="color: var(--text-main);">{{ rec.workload.workload_pct }}% ({{ rec.workload.category }})</strong></span>
+                                <span>Pending: <strong style="color: var(--text-main);">{{ rec.pending_tasks }}</strong></span>
+                            </div>
+
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px; font-style: italic;">
+                                <i class="fas fa-circle-info mr-1"></i> {{ rec.explanation }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: 48px 20px; color: var(--text-muted);">
+                    <i class="fas fa-wand-magic-sparkles" style="font-size: 32px; margin-bottom: 10px; color: var(--royal-purple); display: block;"></i>
+                    <p style="font-size: 13px; font-weight: 600;">Select a Required Skill or Due Date</p>
+                    <p style="font-size: 12px;">Candidate fit ranking will automatically profile the most optimal team member for this assignment.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function selectCandidate(empId, empName) {
+    const select = document.getElementById('assignedToSelect');
+    if (select) {
+        select.value = empId;
+        showToast('Assignee Selected', `${empName} chosen for task assignment`, 'info');
+    }
+}
+
+async function updateRecommendations() {
+    const skillId = document.getElementById('skillSelect').value;
+    const priority = document.getElementById('prioritySelect').value;
+    const dueDate = document.getElementById('dueDateInput').value;
+
+    if (!dueDate) return;
+
+    try {
+        const resp = await fetch(`/api/task-recommendations?skill_id=${skillId}&priority=${priority}&due_date=${dueDate}`);
+        const data = await resp.json();
+
+        const container = document.getElementById('recommendationsContainer');
+        if (!container) return;
+
+        if (!data.candidates || data.candidates.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:30px; color:#94a3b8;">No candidate match available for current filters.</div>';
+            return;
+        }
+
+        container.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                ${data.candidates.map(rec => `
+                    <div class="rec-card" style="border: 1px solid ${rec.is_recommended ? 'var(--primary)' : 'var(--border-light)'}; background: ${rec.is_recommended ? '#f5f3ff' : '#f8fafc'}; border-radius: var(--radius-md); padding: 14px; cursor: pointer;"
+                        onclick="selectCandidate(${rec.employee_id}, '${escapeHTML(rec.full_name)}')">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div class="user-avatar" style="width: 36px; height: 36px; font-size: 13px;">${rec.full_name[0]}</div>
+                                <div>
+                                    <div style="font-weight: 700; font-size: 13px; color: var(--text-main);">
+                                        ${escapeHTML(rec.full_name)}
+                                        ${rec.is_recommended ? '<span class="badge badge-success" style="font-size: 9px; margin-left: 6px;">Top Match</span>' : ''}
+                                    </div>
+                                    <div style="font-size: 11px; color: var(--text-muted);">${escapeHTML(rec.emp_code)}</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 800; font-size: 16px; font-family: Outfit; color: ${rec.score >= 70 ? 'var(--success-dark)' : (rec.score >= 40 ? 'var(--warning-dark)' : 'var(--danger-dark)')};">
+                                    ${rec.score}/100
+                                </div>
+                                <div style="font-size: 10px; color: var(--text-muted);">Fit Score</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 14px; font-size: 11px; color: var(--text-muted); margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(0,0,0,0.05);">
+                            <span>Skill: <strong style="color: var(--text-main);">${escapeHTML(rec.proficiency)}</strong></span>
+                            <span>Workload: <strong style="color: var(--text-main);">${rec.workload_pct}%</strong></span>
+                            <span>Pending: <strong style="color: var(--text-main);">${rec.pending_tasks}</strong></span>
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px; font-style: italic;">
+                            <i class="fas fa-circle-info mr-1"></i> ${escapeHTML(rec.explanation)}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } catch (err) {
+        console.error('Error fetching recommendations:', err);
+    }
+}
+</script>
+{% endblock %}

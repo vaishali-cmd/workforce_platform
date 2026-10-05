@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | Workforce Intelligence & Management Platform</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Main SaaS Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <style>
+        .login-body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #31104b 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 3D Floating Blurred Blobs */
+        .ambient-blob-1 {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.35) 0%, transparent 70%);
+            top: -150px;
+            left: -150px;
+            filter: blur(60px);
+            animation: floatSlow 12s ease-in-out infinite alternate;
+        }
+
+        .ambient-blob-2 {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.35) 0%, transparent 70%);
+            bottom: -200px;
+            right: -200px;
+            filter: blur(70px);
+            animation: floatSlow 15s ease-in-out infinite alternate-reverse;
+        }
+
+        @keyframes floatSlow {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(60px, 40px) scale(1.1); }
+        }
+
+        .login-card-container {
+            width: 100%;
+            max-width: 1000px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: var(--radius-xl);
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            display: grid;
+            grid-template-columns: 1.1fr 1fr;
+            overflow: hidden;
+            position: relative;
+            z-index: 10;
+        }
+
+        .login-brand-panel {
+            padding: 50px 45px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .login-form-panel {
+            padding: 50px 45px;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .role-cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .role-card-item {
+            border: 2px solid var(--border-color);
+            background: #ffffff;
+            border-radius: var(--radius-md);
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            user-select: none;
+            position: relative;
+        }
+
+        .role-card-item:hover {
+            border-color: var(--royal-purple);
+            background: #fdf4ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.12);
+        }
+
+        .role-card-item.active {
+            border-color: var(--primary);
+            background: #f5f3ff;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .role-card-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .role-icon-admin { background: #fee2e2; color: #dc2626; }
+        .role-icon-manager { background: #ede9fe; color: #7c3aed; }
+        .role-icon-lead { background: #e0f2fe; color: #0284c7; }
+        .role-icon-employee { background: #d1fae5; color: #059669; }
+
+        .role-card-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.2;
+        }
+
+        .role-card-desc {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .demo-pills-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .demo-role-btn {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 8px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: var(--transition-fast);
+            text-align: left;
+        }
+
+        .demo-role-btn:hover {
+            background: var(--primary-light);
+            border-color: var(--royal-purple);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 860px) {
+            .login-card-container {
+                grid-template-columns: 1fr;
+            }
+            .login-brand-panel {
+                display: none;
+            }
+            .login-form-panel {
+                padding: 36px 24px;
+            }
+        }
+    </style>
+</head>
+<body class="login-body">
+    <div class="ambient-blob-1"></div>
+    <div class="ambient-blob-2"></div>
+
+    <div class="login-card-container">
+        <!-- Left Brand & Features Showcase Panel -->
+        <div class="login-brand-panel">
+            <div>
+                <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 28px;">
+                    <div class="brand-logo-badge" style="width: 50px; height: 50px; font-size: 24px;">
+                        <i class="fas fa-cubes-stacked"></i>
+                    </div>
+                    <div>
+                        <h2 style="font-size: 20px; color: white; line-height: 1.1;">WORKFORCE</h2>
+                        <div style="font-size: 11px; letter-spacing: 0.1em; color: var(--soft-violet); font-weight: 700;">INTELLIGENCE PLATFORM</div>
+                    </div>
+                </div>
+
+                <h1 style="font-size: 32px; font-weight: 800; line-height: 1.2; margin-bottom: 16px; color: white;">
+                    Intelligent Decision Making for Modern Teams.
+                </h1>
+                <p style="font-size: 14px; color: #cbd5e1; line-height: 1.6; margin-bottom: 30px;">
+                    Experience next-generation workforce orchestration powered by explainable Python intelligence algorithms and role-based operational command.
+                </p>
+
+                <!-- Feature highlights -->
+                <div style="display: flex; flex-direction: column; gap: 14px;">
+                    <div style="display: flex; align-items: center; gap: 12px; font-size: 13px;">
+                        <div style="width: 28px; height: 28px; border-radius: 8px; background: rgba(236, 72, 153, 0.2); color: var(--neon-pink); display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <span><strong>Smart Task Assignment</strong> & candidate scoring</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px; font-size: 13px;">
+                        <div style="width: 28px; height: 28px; border-radius: 8px; background: rgba(59, 130, 246, 0.2); color: #60a5fa; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-shield-halved"></i>
+                        </div>
+                        <span><strong>Leave Impact Warning</strong> with deadline conflict alerts</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px; font-size: 13px;">
+                        <div style="width: 28px; height: 28px; border-radius: 8px; background: rgba(16, 185, 129, 0.2); color: #34d399; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-scale-balanced"></i>
+                        </div>
+                        <span><strong>Workload Imbalance Detection</strong> & instant reassignment</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding-top: 30px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 12px; color: #94a3b8;">
+                Production-ready Python & Flask architecture with role-enforced security.
+            </div>
+        </div>
+
+        <!-- Right Form Panel -->
+        <div class="login-form-panel">
+            <div style="margin-bottom: 24px;">
+                <h2 style="font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">Sign In to Platform</h2>
+                <p style="font-size: 13px; color: var(--text-muted);">Enter your credentials or use quick-login demo accounts below.</p>
+            </div>
+
+            <!-- Flash Error Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div style="padding: 12px 14px; border-radius: var(--radius-sm); margin-bottom: 18px; font-size: 13px; display: flex; align-items: center; gap: 10px; background: {{ '#fef2f2' if category == 'danger' else ('#fffbeb' if category == 'warning' else '#f0fdf4') }}; border: 1px solid {{ '#fecaca' if category == 'danger' else ('#fde68a' if category == 'warning' else '#bbf7d0') }}; color: {{ '#991b1b' if category == 'danger' else ('#92400e' if category == 'warning' else '#166534') }};">
+                            <i class="fas {{ 'fa-circle-exclamation' if category in ['danger', 'warning'] else 'fa-circle-check' }}"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Step 1: 4-Role Login Selection (Always visible on fresh visit & after logout) -->
+            <div style="margin-bottom: 14px;">
+                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-subtle); letter-spacing: 0.05em; margin-bottom: 8px;">
+                    1. Select Portal Role
+                </div>
+                <div class="role-cards-grid" id="roleCardsGrid">
+                    <div class="role-card-item active" id="card_manager" onclick="selectRole('manager', 'manager@workforce.com', 'manager123')">
+                        <div class="role-card-icon role-icon-manager"><i class="fas fa-people-roof"></i></div>
+                        <div>
+                            <div class="role-card-title">Manager</div>
+                            <div class="role-card-desc">Operations & Teams</div>
+                        </div>
+                    </div>
+                    <div class="role-card-item" id="card_admin" onclick="selectRole('admin', 'admin@workforce.com', 'admin123')">
+                        <div class="role-card-icon role-icon-admin"><i class="fas fa-shield-halved"></i></div>
+                        <div>
+                            <div class="role-card-title">HR / Admin</div>
+                            <div class="role-card-desc">System & People Ops</div>
+                        </div>
+                    </div>
+                    <div class="role-card-item" id="card_team_lead" onclick="selectRole('team_lead', 'teamlead@workforce.com', 'lead123')">
+                        <div class="role-card-icon role-icon-lead"><i class="fas fa-wand-magic-sparkles"></i></div>
+                        <div>
+                            <div class="role-card-title">Team Lead</div>
+                            <div class="role-card-desc">Tasks & Dispatch</div>
+                        </div>
+                    </div>
+                    <div class="role-card-item" id="card_employee" onclick="selectRole('employee', 'employee@workforce.com', 'emp123')">
+                        <div class="role-card-icon role-icon-employee"><i class="fas fa-laptop-code"></i></div>
+                        <div>
+                            <div class="role-card-title">Employee</div>
+                            <div class="role-card-desc">Workspace & Tasks</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('auth.login') }}" id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Email or Username</label>
+                    <div style="position: relative;">
+                        <i class="fas fa-envelope" style="position: absolute; left: 14px; top: 15px; color: #94a3b8; font-size: 14px;"></i>
+                        <input type="text" name="login_id" id="loginIdInput" class="form-control" style="padding-left: 40px;" placeholder="e.g. employee@workforce.com" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label class="form-label" style="margin-bottom: 0;">Password</label>
+                        <button type="button" id="togglePasswordBtn" style="background: none; border: none; font-size: 11px; font-weight: 700; color: var(--royal-purple); cursor: pointer;">
+                            <i class="fas fa-eye"></i> Show
+                        </button>
+                    </div>
+                    <div style="position: relative;">
+                        <i class="fas fa-lock" style="position: absolute; left: 14px; top: 15px; color: #94a3b8; font-size: 14px;"></i>
+                        <input type="password" name="password" id="passwordInput" class="form-control" style="padding-left: 40px;" placeholder="••••••••" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; font-size: 13px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-muted); font-weight: 600;">
+                        <input type="checkbox" name="remember_me" checked> Remember session
+                    </label>
+                </div>
+
+                <button type="submit" id="submitLoginBtn" class="btn btn-primary" style="width: 100%; padding: 13px; font-size: 15px; font-weight: 700;">
+                    <span>Sign In to Dashboard</span> <i class="fas fa-arrow-right"></i>
+                </button>
+            
+
+
+                    <input type="hidden" name="role" id="roleInput">
+
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; font-size: 13px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-muted); font-weight: 600;">
+
+                    </label>
+                </div>
+
+
+            </form>
+
+            <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-light);">
+                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-subtle); letter-spacing: 0.05em; margin-bottom: 10px;">
+                    ⚡ One-Click Demo Quick Fill
+                </div>
+                <div class="demo-pills-row">
+                    <button type="button" class="demo-role-btn" onclick="selectRole('manager', 'manager@workforce.com', 'manager123')">
+                        <span class="badge badge-purple" style="padding: 2px 6px;">MGR</span>
+                        <span>Priya (Manager)</span>
+                    </button>
+                    <button type="button" class="demo-role-btn" onclick="selectRole('admin', 'admin@workforce.com', 'admin123')">
+                        <span class="badge badge-danger" style="padding: 2px 6px;">HR</span>
+                        <span>Sarah (Admin)</span>
+                    </button>
+                    <button type="button" class="demo-role-btn" onclick="selectRole('team_lead', 'teamlead@workforce.com', 'lead123')">
+                        <span class="badge badge-info" style="padding: 2px 6px;">LEAD</span>
+                        <span>Rajesh (Tech Lead)</span>
+                    </button>
+                    <button type="button" class="demo-role-btn" onclick="selectRole('employee', 'employee@workforce.com', 'emp123')">
+                        <span class="badge badge-success" style="padding: 2px 6px;">EMP</span>
+                    </button>
+                </div>
+            </div>
+
+    <script>
+        // Show/Hide password toggle
+        const toggleBtn = document.getElementById('togglePasswordBtn');
+        const passInput = document.getElementById('passwordInput');
+        toggleBtn.addEventListener('click', () => {
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide';
+            } else {
+                passInput.type = 'password';
+                toggleBtn.innerHTML = '<i class="fas fa-eye"></i> Show';
+            }
+        });
+
+        // 4 Role selection logic
+        function selectRole(role, email, pass) {
+            // Update active state on 4 role cards
+            document.querySelectorAll('.role-card-item').forEach(c => c.classList.remove('active'));
+            const activeCard = document.getElementById('card_' + role);
+            if (activeCard) activeCard.classList.add('active');
+
+            // Synchronize role select dropdown
+            const roleSelect = document.getElementById('roleSelect');
+            if (roleSelect) roleSelect.value = role;
+
+            // Pre-populate input fields for primary form
+            const loginInput = document.getElementById('loginIdInput');
+            const passwordInput = document.getElementById('passwordInput');
+            if (loginInput) loginInput.value = email;
+            if (passwordInput) passwordInput.value = pass;
+
+            // Pre-populate duplicate form fields
+            const loginDup = document.getElementById('loginIdInputDuplicate');
+            const passDup = document.getElementById('passwordInputDuplicate');
+            if (loginDup) loginDup.value = email;
+            if (passDup) passDup.value = pass;
+
+            // Update submit button text for primary form
+            const roleLabels = {
+                'admin': 'HR / Admin',
+                'manager': 'Manager',
+                'team_lead': 'Team Lead',
+                'employee': 'Employee'
+            };
+            const submitBtn = document.getElementById('submitLoginBtn');
+            if (submitBtn) {
+                submitBtn.innerHTML = `<span>Sign In as ${roleLabels[role] || 'User'}</span> <i class="fas fa-arrow-right"></i>`;
+            }
+            // Update submit button text for duplicate form
+            const submitDup = document.getElementById('submitLoginBtnDuplicate');
+            if (submitDup) {
+                submitDup.innerHTML = `<span>Sign In as ${roleLabels[role] || 'User'}</span> <i class="fas fa-arrow-right"></i>`;
+            }
+        }
+
+        // Form submit loading state
+        document.getElementById('loginForm').addEventListener('submit', function() {
+            const btn = document.getElementById('submitLoginBtn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
+            btn.disabled = true;
+            this.submit();
+        });
+
+        // Role select dropdown change listener
+        const roleSelectEl = document.getElementById('roleSelect');
+        if (roleSelectEl) {
+            roleSelectEl.addEventListener('change', function() {
+                const credMap = {
+                    'manager': ['manager@workforce.com', 'manager123'],
+                    'admin': ['admin@workforce.com', 'admin123'],
+                    'team_lead': ['teamlead@workforce.com', 'lead123'],
+                    'employee': ['employee@workforce.com', 'emp123']
+                };
+                const role = this.value;
+                if (credMap[role]) {
+                    selectRole(role, credMap[role][0], credMap[role][1]);
+                }
+            });
+        }
+
+        // Ensure default role is active and populated on every load, back-forward cache, and return from logout
+        function initRoleSelection() {
+            const roleSelectElem = document.getElementById('roleSelect');
+            const selected = (roleSelectElem && roleSelectElem.value) ? roleSelectElem.value : 'manager';
+            const credMap = {
+                'manager': ['manager@workforce.com', 'manager123'],
+                'admin': ['admin@workforce.com', 'admin123'],
+                'team_lead': ['teamlead@workforce.com', 'lead123'],
+                'employee': ['employee@workforce.com', 'emp123']
+            };
+            const creds = credMap[selected] || credMap['manager'];
+            selectRole(selected, creds[0], creds[1]);
+        }
+
+        // Initialize duplicate password toggle
+        const toggleBtnDup = document.getElementById('togglePasswordBtnDuplicate');
+        const passInputDup = document.getElementById('passwordInputDuplicate');
+        if (toggleBtnDup && passInputDup) {
+            toggleBtnDup.addEventListener('click', () => {
+                if (passInputDup.type === 'password') {
+                    passInputDup.type = 'text';
+                    toggleBtnDup.innerHTML = '<i class="fas fa-eye-slash"></i> Hide';
+                } else {
+                    passInputDup.type = 'password';
+                    toggleBtnDup.innerHTML = '<i class="fas fa-eye"></i> Show';
+                }
+            });
+        }
+
+        // Form submit loading state for duplicate form
+        const loginFormDup = document.getElementById('loginFormDuplicate');
+        if (loginFormDup) {
+            loginFormDup.addEventListener('submit', function() {
+                const btn = document.getElementById('submitLoginBtnDuplicate');
+                if (btn) {
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
+                    btn.disabled = true;
+                }
+                this.submit();
+            });
+        }
+
+        window.addEventListener('pageshow', initRoleSelection);
+        document.addEventListener('DOMContentLoaded', initRoleSelection);
+    </script>
+</body>
+</html>

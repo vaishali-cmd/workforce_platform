@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+
+{% block title %}My Workspace | Workforce Intelligence{% endblock %}
+{% block page_title %}Personal Workspace &bull; {{ employee.full_name }}{% endblock %}
+
+{% block content %}
+<!-- Employee Hero Banner -->
+<div class="card-3d card-3d-dark" style="padding: 30px 34px; border-radius: var(--radius-xl); margin-bottom: 28px; position: relative;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+        <div style="max-width: 620px;">
+            <span class="badge badge-success" style="font-size: 11px; margin-bottom: 10px;">
+                <i class="fas fa-house-user"></i> Active Workspace &bull; {{ employee.emp_code }}
+            </span>
+            <h1 style="font-size: 26px; font-weight: 800; line-height: 1.2; margin-bottom: 8px; color: white;">
+                Welcome back, {{ employee.full_name }}!
+            </h1>
+            <p style="font-size: 14px; color: #cbd5e1; line-height: 1.6;">
+                {{ employee.designation or 'Software Engineer' }} &bull; {{ employee.team.name if employee.team else 'General Platform Team' }} &bull; Department: {{ employee.department.name if employee.department else 'Engineering' }}
+            </p>
+        </div>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <!-- Clock In / Out Quick Buttons -->
+            {% if not today_att or not today_att.check_in %}
+                <form method="POST" action="{{ url_for('employee.attendance') }}" style="display: inline;">
+                    <input type="hidden" name="action" value="check_in">
+                    <button type="submit" class="btn btn-accept" style="padding: 12px 18px; font-size: 13px;">
+                        <i class="fas fa-right-to-bracket mr-1"></i> Clock In Now
+                    </button>
+                </form>
+            {% elif not today_att.check_out %}
+                <form method="POST" action="{{ url_for('employee.attendance') }}" style="display: inline;">
+                    <input type="hidden" name="action" value="check_out">
+                    <button type="submit" class="btn btn-warning" style="padding: 12px 18px; font-size: 13px;">
+                        <i class="fas fa-right-from-bracket mr-1"></i> Clock Out ({{ today_att.check_in.strftime('%H:%M') }})
+                    </button>
+                </form>
+            {% else %}
+                <div style="background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.4); border-radius: var(--radius-sm); padding: 10px 16px; color: #34d399; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-circle-check"></i> Shift Logged ({{ today_att.working_hours }}h)
+                </div>
+            {% endif %}
+            <a href="{{ url_for('employee.leaves') }}" class="btn btn-outline" style="background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); color: white; padding: 12px 18px; font-size: 13px;">
+                <i class="fas fa-plane-departure mr-1"></i> Apply Leave
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Employee KPI Metrics -->
+<div class="metrics-grid">
+    <div class="metric-card">
+        <div class="metric-icon-box bg-purple-grad">
+            <i class="fas fa-list-check"></i>
+        </div>
+        <div class="metric-info">
+            <div class="metric-value">{{ pending_tasks | length }}</div>
+            <div class="metric-label">Active Tasks</div>
+            <div class="metric-trend"><span style="color: var(--royal-purple);">In sprint</span></div>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon-box bg-emerald-grad">
+            <i class="fas fa-circle-check"></i>
+        </div>
+        <div class="metric-info">
+            <div class="metric-value">{{ completed_tasks | length }}</div>
+            <div class="metric-label">Completed Tasks</div>
+            <div class="metric-trend trend-up"><i class="fas fa-award"></i> {{ completion_rate }}% velocity</div>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon-box bg-sunset-grad">
+            <i class="fas fa-scale-balanced"></i>
+        </div>
+        <div class="metric-info">
+            <div class="metric-value">{{ workload.workload_pct }}%</div>
+            <div class="metric-label">Assigned Workload</div>
+            <div class="metric-trend">
+                <span class="badge {{ workload.badge_class }}" style="font-size: 10px; padding: 1px 6px;">
+                    {{ workload.category }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon-box bg-blue-grad">
+            <i class="fas fa-user-clock"></i>
+        </div>
+        <div class="metric-info">
+            <div class="metric-value">
+                {% if today_att and today_att.check_in %}
+                    {{ today_att.check_in.strftime('%I:%M %p') }}
+                {% else %}
+                    Pending
+                {% endif %}
+            </div>
+            <div class="metric-label">Today's Clock-in</div>
+            <div class="metric-trend">
+                {% if today_att and today_att.check_out %}
+                    <span style="color: var(--success);"><i class="fas fa-check"></i> Checked out</span>
+                {% elif today_att and today_att.check_in %}
+                    <span style="color: var(--info);"><i class="fas fa-spinner fa-spin"></i> Active shift</span>
+                {% else %}
+                    <span style="color: var(--warning);"><i class="fas fa-clock"></i> Not checked in</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Sprint Tasks & Deadlines Grid -->
+<div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; margin-bottom: 28px;">
+    <!-- My Active Tasks -->
+    <div class="card-3d">
+        <div class="card-gradient-top"></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+            <div>
+                <h3 style="font-size: 17px; font-weight: 800;"><i class="fas fa-bars-progress text-indigo-500 mr-2"></i> Current Deliverables</h3>
+                <p style="font-size: 12px; color: var(--text-muted);">Update progress milestones or mark deliverables completed.</p>
+            </div>
+            <a href="{{ url_for('employee.tasks') }}" class="btn btn-sm btn-outline">All Tasks</a>
+        </div>
+
+        {% if pending_tasks %}
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+                {% for t in pending_tasks %}
+                    <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <div>
+                                <span class="badge {{ t.priority_badge_class }}" style="font-size: 9px; margin-bottom: 4px;">{{ t.priority }}</span>
+                                <div style="font-weight: 700; font-size: 14px; color: var(--text-main);">{{ t.title }}</div>
+                                <div style="font-size: 11px; font-family: monospace; color: var(--royal-purple);">{{ t.task_code }}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 11px; font-weight: 700; {{ 'color: var(--danger);' if t.is_overdue else 'color: var(--text-muted);' }}">
+                                    Due: {{ t.due_date | format_date }}
+                                </div>
+                                {% if t.is_deadline_risk %}
+                                    <span class="badge badge-danger" style="font-size: 9px; padding: 1px 5px; margin-top: 2px;">At Risk</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar & Slider Form -->
+                        <form method="POST" action="{{ url_for('employee.tasks') }}" style="margin-top: 10px;">
+                            <input type="hidden" name="task_id" value="{{ t.id }}">
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 700; margin-bottom: 4px;">
+                                <span>Progress</span>
+                                <span id="valDisplay_{{ t.id }}" style="color: var(--primary);">{{ t.progress }}%</span>
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="range" name="progress" min="0" max="100" value="{{ t.progress }}" class="task-progress-slider" data-task-id="{{ t.id }}" style="flex: 1; accent-color: var(--primary); cursor: pointer;">
+                                <button type="submit" class="btn btn-sm btn-outline" style="padding: 3px 8px; font-size: 11px;">Update</button>
+                                <button type="button" class="btn btn-sm btn-accept" style="padding: 3px 8px; font-size: 11px;" onclick="confirmTaskCompletion({{ t.id }}, '{{ t.title | escape }}')">
+                                    <i class="fas fa-check"></i> Done
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 48px; color: var(--text-muted);">
+                <i class="fas fa-circle-check text-emerald-500" style="font-size: 32px; margin-bottom: 8px; display: block;"></i>
+                <p style="font-size: 13px; font-weight: 600;">You have no active pending tasks!</p>
+                <p style="font-size: 11px;">Great job keeping your sprint backlog clean.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Upcoming Deadlines & Recent Leaves -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+        <!-- Upcoming Deadlines -->
+        <div class="card-3d">
+            <div class="card-gradient-top"></div>
+            <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 14px;">
+                <i class="fas fa-clock text-rose-500 mr-2"></i> Upcoming Deadlines (&le; 5 Days)
+            </h3>
+
+            {% if upcoming_deadlines %}
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    {% for dt in upcoming_deadlines %}
+                        <div style="padding: 10px 14px; background: #fff1f2; border: 1px solid #fecdd3; border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 700; font-size: 13px; color: #9f1239;">{{ dt.title }}</div>
+                                <div style="font-size: 11px; color: #be123c;">
+                                    Due: {{ dt.due_date | format_date }} &bull; Progress: {{ dt.progress }}%
+                                </div>
+                            </div>
+                            <span class="badge badge-danger">Urgent</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 12px;">
+                    <i class="fas fa-calendar-check text-emerald-500" style="font-size: 24px; margin-bottom: 6px; display: block;"></i>
+                    No acute deadlines approaching in the next 5 days.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Recent Leave Requests -->
+        <div class="card-3d">
+            <div class="card-gradient-top"></div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <h3 style="font-size: 16px; font-weight: 800;">
+                    <i class="fas fa-plane-departure text-sky-500 mr-2"></i> Recent Time-Off Requests
+                </h3>
+                <a href="{{ url_for('employee.leaves') }}" class="btn btn-sm btn-outline">Apply</a>
+            </div>
+
+            {% if leaves %}
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    {% for l in leaves %}
+                        <div style="padding: 8px 12px; background: #f8fafc; border: 1px solid var(--border-light); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 700; font-size: 12px; color: var(--text-main);">{{ l.leave_type }}</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">{{ l.start_date | format_date('%d %b') }} - {{ l.end_date | format_date('%d %b') }} ({{ l.days_count }}d)</div>
+                            </div>
+                            <span class="badge {{ l.status_badge_class }}" style="font-size: 10px;">{{ l.status }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 12px;">
+                    No recent leave applications.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

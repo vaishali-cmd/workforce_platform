@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Teams Capacity & Performance | Manager{% endblock %}
+{% block page_title %}Teams Capacity & Allocation Breakdown{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 24px;">
+    <h2 style="font-size: 24px; font-weight: 800;">Managed Engineering Teams</h2>
+    <p style="font-size: 13px; color: var(--text-muted);">Multi-team performance benchmarking, member capacity, and
+        active task load.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 24px;">
+    {% for tc in teams_comparison %}
+    <div class="card-3d">
+        <div class="card-gradient-top"></div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+            <div>
+                <h3 style="font-size: 18px; font-weight: 800; color: var(--text-main);">{{ tc.team.name }}</h3>
+                <div style="font-size: 12px; color: var(--royal-purple); font-weight: 600;">
+                    {{ tc.team.department.name }}
+                </div>
+            </div>
+            <span
+                class="badge {{ 'badge-danger' if tc.assigned_pct > 90 else ('badge-warning' if tc.assigned_pct > 75 else 'badge-success') }}">
+                {{ tc.status }}
+            </span>
+        </div>
+
+        <!-- Capacity vs Assigned Gauge -->
+        <div
+            style="margin-bottom: 18px; background: #f8fafc; padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-light);">
+            <div
+                style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 6px;">
+                <span>Assigned Workload</span>
+                <span>{{ tc.assigned_pct }}% of Capacity</span>
+            </div>
+            <div class="progress-track" style="height: 10px;">
+                <div class="progress-fill {{ 'progress-fill-danger' if tc.assigned_pct > 90 else ('progress-fill-warning' if tc.assigned_pct > 75 else 'progress-fill-success') }}"
+                    style="width: {{ min(100, tc.assigned_pct) }}%;"></div>
+            </div>
+            <div
+                style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+                <span>Total Team Units: {{ tc.member_count * 100 }} pts</span>
+                <span>Active Tasks: {{ tc.active_tasks }}</span>
+            </div>
+        </div>
+
+        <!-- Team Members Roster -->
+        <div style="margin-bottom: 18px;">
+            <div
+                style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-subtle); letter-spacing: 0.05em; margin-bottom: 8px;">
+                Assigned Engineers ({{ tc.member_count }})
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                {% for m in tc.team.members %}
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 6px 10px; background: white; border: 1px solid var(--border-light); border-radius: var(--radius-sm);">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div class="user-avatar" style="width: 26px; height: 26px; font-size: 10px;">{{ m.full_name[0]
+                            }}</div>
+                        <span style="font-weight: 600;">{{ m.full_name }}</span>
+                    </div>
+                    <span class="badge role-pill-{{ m.role_name }}" style="font-size: 9px; padding: 1px 6px;">{{
+                        m.designation or m.role_name }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div
+            style="display: flex; justify-content: space-between; font-size: 12px; padding-top: 12px; border-top: 1px solid var(--border-light); color: var(--text-muted);">
+            <span>Completed: <strong>{{ tc.completed_tasks }}</strong></span>
+            <span>Delayed: <strong style="color: var(--danger);">{{ tc.delayed_tasks }}</strong></span>
+            <span>Velocity: <strong style="color: var(--success-dark);">{{ tc.completion_rate }}%</strong></span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

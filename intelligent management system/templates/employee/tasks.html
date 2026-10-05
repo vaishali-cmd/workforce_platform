@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}My Assigned Tasks | Employee{% endblock %}
+{% block page_title %}My Deliverables &amp; Sprint Tasks{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+    <div>
+        <h2 style="font-size: 24px; font-weight: 800;">My Assigned Tasks &bull; {{ employee.full_name }}</h2>
+        <p style="font-size: 13px; color: var(--text-muted);">Track your active deliverables, log percentage progress, and submit completions for review.</p>
+    </div>
+    <a href="{{ url_for('employee.dashboard') }}" class="btn btn-outline">
+        <i class="fas fa-house-user mr-1"></i> My Workspace
+    </a>
+</div>
+
+<!-- Filter Bar -->
+<div class="card-3d" style="padding: 16px 20px; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <a href="{{ url_for('employee.tasks') }}" class="btn btn-sm {{ 'btn-primary' if not status_filter else 'btn-outline' }}">All Tasks</a>
+            <a href="{{ url_for('employee.tasks', status='Assigned') }}" class="btn btn-sm {{ 'btn-primary' if status_filter == 'Assigned' else 'btn-outline' }}">Assigned</a>
+            <a href="{{ url_for('employee.tasks', status='In Progress') }}" class="btn btn-sm {{ 'btn-primary' if status_filter == 'In Progress' else 'btn-outline' }}">In Progress</a>
+            <a href="{{ url_for('employee.tasks', status='Completed') }}" class="btn btn-sm {{ 'btn-primary' if status_filter == 'Completed' else 'btn-outline' }}">Completed</a>
+        </div>
+        <div>
+            <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">
+                Showing {{ tasks | length }} task(s)
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Task Cards Grid -->
+{% if tasks %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px;">
+        {% for t in tasks %}
+            <div class="card-3d" style="display: flex; flex-direction: column; justify-content: space-between; border-left: 4px solid {{ 'var(--success)' if t.status == 'Completed' else ('var(--danger)' if t.priority == 'Critical' else 'var(--primary)') }};">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                        <span class="badge {{ t.priority_badge_class }}">{{ t.priority }} Priority</span>
+                        <span class="badge {{ t.status_badge_class }}">{{ t.status }}</span>
+                    </div>
+
+                    <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">{{ t.title }}</h3>
+                    <div style="font-size: 11px; font-family: monospace; color: var(--royal-purple); font-weight: 700; margin-bottom: 10px;">
+                        {{ t.task_code }} &bull; Due: {{ t.due_date | format_date }}
+                    </div>
+
+                    {% if t.description %}
+                        <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 14px;">
+                            {{ t.description }}
+                        </p>
+                    {% endif %}
+
+                    {% if t.remarks %}
+                        <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 8px 10px; font-size: 11px; color: var(--text-muted); margin-bottom: 14px;">
+                            <strong>Latest Remarks:</strong> {{ t.remarks }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <!-- Progress meter & slider update -->
+                    <form method="POST" action="{{ url_for('employee.tasks') }}" style="border-top: 1px solid var(--border-light); padding-top: 12px;">
+                        <input type="hidden" name="task_id" value="{{ t.id }}">
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; margin-bottom: 4px;">
+                            <span>Completion Progress</span>
+                            <span id="valDisplay_{{ t.id }}" style="color: var(--primary);">{{ t.progress }}%</span>
+                        </div>
+
+                        {% if t.status != 'Completed' %}
+                            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 10px;">
+                                <input type="range" name="progress" min="0" max="100" value="{{ t.progress }}" class="task-progress-slider" data-task-id="{{ t.id }}" style="flex: 1; accent-color: var(--primary); cursor: pointer;">
+                                <button type="submit" class="btn btn-sm btn-outline" style="padding: 4px 10px; font-size: 11px;">Update</button>
+                            </div>
+                            
+                            <div style="display: flex; gap: 8px;">
+                                <button type="button" class="btn btn-sm btn-accept" style="width: 100%; padding: 8px; font-weight: 700; font-size: 12px;"
+                                    onclick="confirmTaskCompletion({{ t.id }}, '{{ t.title | escape }}')">
+                                    <i class="fas fa-circle-check mr-1"></i> Mark as Completed
+                                </button>
+                            </div>
+                        {% else %}
+                            <div class="progress-track" style="height: 8px; margin-bottom: 10px;">
+                                <div class="progress-fill progress-fill-success" style="width: 100%;"></div>
+                            </div>
+                            <div style="text-align: center; color: var(--success); font-size: 12px; font-weight: 700; padding: 6px;">
+                                <i class="fas fa-trophy mr-1"></i> Completed on {{ t.completed_at | format_date if t.completed_at else 'Verified' }}
+                            </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card-3d" style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
+        <i class="fas fa-list-check" style="font-size: 42px; margin-bottom: 12px; display: block; color: var(--text-subtle);"></i>
+        <h3>No tasks found matching current criteria.</h3>
+        <p style="font-size: 13px;">Check back later or discuss sprint allocations with your Team Lead.</p>
+    </div>
+{% endif %}
+{% endblock %}

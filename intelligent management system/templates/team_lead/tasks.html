@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block title %}Team Task Board | Team Lead{% endblock %}
+{% block page_title %}Team Sprint Task Board{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+    <div>
+        <h2 style="font-size: 24px; font-weight: 800;">Sprint Task Pipeline &bull; {{ team.name if team else 'Team' }}</h2>
+        <p style="font-size: 13px; color: var(--text-muted);">Manage deliverables, monitor completion velocity, and reassign tasks to balance capacity.</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+        <a href="{{ url_for('team_lead.assign_task') }}" class="btn btn-primary">
+            <i class="fas fa-plus mr-1"></i> Dispatch New Task
+        </a>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card-3d" style="padding: 16px 20px; margin-bottom: 20px;">
+    <form method="GET" action="{{ url_for('team_lead.tasks') }}" style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <a href="{{ url_for('team_lead.tasks') }}" class="btn btn-sm {{ 'btn-primary' if not status_filter and not priority_filter and not search_q else 'btn-outline' }}">All Tasks</a>
+            <a href="{{ url_for('team_lead.tasks', status='Assigned') }}" class="btn btn-sm {{ 'btn-primary' if status_filter == 'Assigned' else 'btn-outline' }}">Assigned</a>
+            <a href="{{ url_for('team_lead.tasks', status='In Progress') }}" class="btn btn-sm {{ 'btn-primary' if status_filter == 'In Progress' else 'btn-outline' }}">In Progress</a>
+            <a href="{{ url_for('team_lead.tasks', status='Completed') }}" class="btn btn-sm {{ 'btn-primary' if status_filter == 'Completed' else 'btn-outline' }}">Completed</a>
+            <a href="{{ url_for('team_lead.tasks', priority='Critical') }}" class="btn btn-sm {{ 'btn-primary' if priority_filter == 'Critical' else 'btn-outline' }}">Critical</a>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <div style="position: relative; min-width: 240px;">
+                <i class="fas fa-magnifying-glass" style="position: absolute; left: 12px; top: 12px; color: #94a3b8; font-size: 13px;"></i>
+                <input type="text" name="q" value="{{ search_q or '' }}" class="form-control" style="padding-left: 36px; padding-top: 8px; padding-bottom: 8px; font-size: 13px;" placeholder="Search task title or code...">
+            </div>
+            <button type="submit" class="btn btn-sm btn-outline">Filter</button>
+            {% if status_filter or priority_filter or search_q %}
+                <a href="{{ url_for('team_lead.tasks') }}" class="btn btn-sm btn-outline" style="color: var(--danger);">Reset</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Task Board Table -->
+<div class="card-3d" style="padding: 0; overflow: hidden;">
+    {% if tasks %}
+        <div class="table-container" style="border: none;">
+            <table class="saas-table">
+                <thead>
+                    <tr>
+                        <th>Code &amp; Title</th>
+                        <th>Assignee</th>
+                        <th>Required Skill</th>
+                        <th>Priority</th>
+                        <th>Progress</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in tasks %}
+                        <tr>
+                            <td>
+                                <div style="font-weight: 700; color: var(--text-main);">{{ t.title }}</div>
+                                <div style="font-size: 11px; font-family: monospace; color: var(--royal-purple); font-weight: 700;">{{ t.task_code }}</div>
+                            </td>
+                            <td>
+                                {% if t.assignee %}
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div class="user-avatar" style="width: 28px; height: 28px; font-size: 11px;">
+                                            {{ t.assignee.full_name[0] }}
+                                        </div>
+                                        <div>
+                                            <div style="font-weight: 600; font-size: 13px;">{{ t.assignee.full_name }}</div>
+                                            <div style="font-size: 10px; color: var(--text-muted);">{{ t.assignee.designation or 'Engineer' }}</div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <span class="badge badge-secondary">Unassigned</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if t.required_skill %}
+                                    <span class="badge badge-purple">{{ t.required_skill.name }}</span>
+                                {% else %}
+                                    <span style="font-size: 11px; color: var(--text-subtle);">General</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {{ t.priority_badge_class }}">{{ t.priority }}</span>
+                            </td>
+                            <td style="min-width: 130px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; margin-bottom: 3px;">
+                                    <span>{{ t.progress }}%</span>
+                                </div>
+                                <div class="progress-track" style="height: 6px;">
+                                    <div class="progress-fill {{ 'progress-fill-success' if t.progress == 100 else ('progress-fill-danger' if t.priority == 'Critical' else '') }}" style="width: {{ t.progress }}%;"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <div style="font-weight: 600; {{ 'color: var(--danger);' if t.is_overdue else '' }}">
+                                    {{ t.due_date | format_date }}
+                                </div>
+                                {% if t.is_deadline_risk %}
+                                    <span class="badge badge-danger" style="font-size: 9px; padding: 1px 5px;">At Risk</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {{ t.status_badge_class }}">{{ t.status }}</span>
+                            </td>
+                            <td>
+                                {% if t.status != 'Completed' %}
+                                    <button type="button" class="btn btn-sm btn-outline" style="padding: 4px 8px; font-size: 11px;"
+                                        onclick="openReassignModal({{ t.id }}, '{{ t.title | escape }}', '{{ t.assignee.full_name if t.assignee else 'Unassigned' }}')">
+                                        <i class="fas fa-arrows-rotate mr-1"></i> Reassign
+                                    </button>
+                                {% else %}
+                                    <span style="font-size: 11px; color: var(--success); font-weight: 700;"><i class="fas fa-circle-check mr-1"></i> Delivered</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 48px; color: var(--text-muted);">
+            <i class="fas fa-bars-progress" style="font-size: 36px; margin-bottom: 12px; display: block; color: var(--text-subtle);"></i>
+            <h4>No tasks found for the selected filter criteria.</h4>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Workforce Intelligence Platform{% endblock %} | AI & Workforce SaaS</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    <!-- Main SaaS Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    <div class="app-container">
+        <!-- 3D Layered Sidebar -->
+        <aside class="app-sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <div class="brand-logo-badge">
+                    <i class="fas fa-cubes-stacked"></i>
+                </div>
+                <div>
+                    <div class="brand-title">WORKFORCE</div>
+                    <div class="brand-subtitle">Intelligence SaaS</div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                {% if current_role == 'admin' %}
+                    <div class="nav-section-label">HR / Administration</div>
+                    <a href="{{ url_for('admin.dashboard') }}" class="nav-item {{ 'active' if request.endpoint == 'admin.dashboard' else '' }}">
+                        <i class="fas fa-chart-pie"></i> <span>Dashboard</span>
+                    </a>
+                    <a href="{{ url_for('admin.employees') }}" class="nav-item {{ 'active' if request.endpoint == 'admin.employees' else '' }}">
+                        <i class="fas fa-users-gear"></i> <span>Employees</span>
+                    </a>
+                    <a href="{{ url_for('admin.departments') }}" class="nav-item {{ 'active' if request.endpoint == 'admin.departments' else '' }}">
+                        <i class="fas fa-building-user"></i> <span>Departments & Teams</span>
+                    </a>
+                    <a href="{{ url_for('admin.attendance') }}" class="nav-item {{ 'active' if request.endpoint == 'admin.attendance' else '' }}">
+                        <i class="fas fa-calendar-check"></i> <span>Attendance Log</span>
+                    </a>
+                    <a href="{{ url_for('admin.leaves') }}" class="nav-item {{ 'active' if request.endpoint == 'admin.leaves' else '' }}">
+                        <i class="fas fa-umbrella-beach"></i> <span>Leave Management</span>
+                    </a>
+                    <a href="{{ url_for('admin.tasks') }}" class="nav-item {{ 'active' if request.endpoint == 'admin.tasks' else '' }}">
+                        <i class="fas fa-list-check"></i> <span>Org Tasks</span>
+                    </a>
+                    <a href="{{ url_for('admin.analytics') }}" class="nav-item {{ 'active' if request.endpoint == 'admin.analytics' else '' }}">
+                        <i class="fas fa-chart-line"></i> <span>Workforce Analytics</span>
+                    </a>
+
+                {% elif current_role == 'manager' %}
+                    <div class="nav-section-label">Executive Management</div>
+                    <a href="{{ url_for('manager.dashboard') }}" class="nav-item {{ 'active' if request.endpoint == 'manager.dashboard' else '' }}">
+                        <i class="fas fa-gauge-high"></i> <span>Executive Dashboard</span>
+                    </a>
+                    <a href="{{ url_for('manager.teams') }}" class="nav-item {{ 'active' if request.endpoint == 'manager.teams' else '' }}">
+                        <i class="fas fa-people-roof"></i> <span>Teams & Capacity</span>
+                    </a>
+                    <a href="{{ url_for('manager.workload') }}" class="nav-item {{ 'active' if request.endpoint == 'manager.workload' else '' }}">
+                        <i class="fas fa-chart-column"></i> <span>Workload Allocation</span>
+                    </a>
+                    <a href="{{ url_for('manager.skill_gaps') }}" class="nav-item {{ 'active' if request.endpoint == 'manager.skill_gaps' else '' }}">
+                        <i class="fas fa-puzzle-piece"></i> <span>Skill Gap Intelligence</span>
+                    </a>
+
+                {% elif current_role == 'team_lead' %}
+                    <div class="nav-section-label">Team Leadership</div>
+                    <a href="{{ url_for('team_lead.dashboard') }}" class="nav-item {{ 'active' if request.endpoint == 'team_lead.dashboard' else '' }}">
+                        <i class="fas fa-chalkboard-user"></i> <span>Lead Dashboard</span>
+                    </a>
+                    <a href="{{ url_for('team_lead.assign_task') }}" class="nav-item {{ 'active' if request.endpoint == 'team_lead.assign_task' else '' }}">
+                        <i class="fas fa-wand-magic-sparkles"></i> <span>Smart Task Dispatch</span>
+                    </a>
+                    <a href="{{ url_for('team_lead.tasks') }}" class="nav-item {{ 'active' if request.endpoint == 'team_lead.tasks' else '' }}">
+                        <i class="fas fa-bars-progress"></i> <span>Task Board</span>
+                    </a>
+                    <a href="{{ url_for('team_lead.leaves') }}" class="nav-item {{ 'active' if request.endpoint == 'team_lead.leaves' else '' }}">
+                        <i class="fas fa-clipboard-check"></i> <span>Leave Requests</span>
+                    </a>
+                    <a href="{{ url_for('team_lead.workload') }}" class="nav-item {{ 'active' if request.endpoint == 'team_lead.workload' else '' }}">
+                        <i class="fas fa-scale-balanced"></i> <span>Workload Balancing</span>
+                    </a>
+
+                {% elif current_role == 'employee' %}
+                    <div class="nav-section-label">Workspace</div>
+                    <a href="{{ url_for('employee.dashboard') }}" class="nav-item {{ 'active' if request.endpoint == 'employee.dashboard' else '' }}">
+                        <i class="fas fa-house-user"></i> <span>My Workspace</span>
+                    </a>
+                    <a href="{{ url_for('employee.tasks') }}" class="nav-item {{ 'active' if request.endpoint == 'employee.tasks' else '' }}">
+                        <i class="fas fa-list-check"></i> <span>My Tasks & Progress</span>
+                    </a>
+                    <a href="{{ url_for('employee.attendance') }}" class="nav-item {{ 'active' if request.endpoint == 'employee.attendance' else '' }}">
+                        <i class="fas fa-user-clock"></i> <span>Clock In / Attendance</span>
+                    </a>
+                    <a href="{{ url_for('employee.leaves') }}" class="nav-item {{ 'active' if request.endpoint == 'employee.leaves' else '' }}">
+                        <i class="fas fa-plane-departure"></i> <span>Apply Leave</span>
+                    </a>
+                    <a href="{{ url_for('employee.profile') }}" class="nav-item {{ 'active' if request.endpoint == 'employee.profile' else '' }}">
+                        <i class="fas fa-id-card"></i> <span>My Profile & Skills</span>
+                    </a>
+                {% endif %}
+
+                <div class="nav-section-label" style="margin-top: auto;">Account</div>
+                <a href="{{ url_for('auth.logout') }}" class="nav-item" style="color: var(--danger);">
+                    <i class="fas fa-right-from-bracket"></i> <span>Sign Out</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-snippet-card">
+                    <div class="user-avatar">
+                        {{ session.get('full_name', 'U')[0] }}
+                    </div>
+                    <div class="user-snippet-info">
+                        <div class="user-snippet-name">{{ session.get('full_name', 'User') }}</div>
+                        <div class="user-snippet-role">{{ current_role.replace('_', ' ') }}</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Wrapper -->
+        <main class="app-main">
+            <!-- Top Sticky Navbar -->
+            <header class="app-topbar">
+                <div class="topbar-left">
+                    <button type="button" class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Toggle Sidebar">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <!-- Mobile / Desktop View Toggle (Top-Left, Icon only) -->
+                    <button type="button" class="icon-button" id="viewportPreviewToggleBtn" title="Switch View" style="margin-right: 6px;">
+                        <i class="fas fa-mobile-screen-button" id="viewportPreviewIcon"></i>
+                    </button>
+                    <div class="page-breadcrumb">
+                        <span>Workforce</span>
+                        <i class="fas fa-chevron-right" style="font-size: 10px;"></i>
+                        <span class="crumb-title">{% block page_title %}Dashboard{% endblock %}</span>
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <!-- Current Role Badge -->
+                    <span class="role-pill-badge role-pill-{{ current_role }}">
+                        <i class="fas fa-shield-halved"></i> {{ current_role.replace('_', ' ') }}
+                    </span>
+
+                    <!-- Notification Bell with Popover -->
+                    <div style="position: relative;">
+                        <button type="button" class="icon-button" id="notificationBellBtn" title="Notifications">
+                            <i class="far fa-bell"></i>
+                            {% if unread_notifications_count > 0 %}
+                                <span class="notification-count-badge" id="notificationCountBadge">{{ unread_notifications_count }}</span>
+                            {% endif %}
+                        </button>
+
+                        <div id="notificationDropdown" style="display: none; position: absolute; top: 50px; right: 0; width: 360px; background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-xl); border: 1px solid var(--border-light); z-index: 1000; overflow: hidden;">
+                            <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+                                <div style="font-weight: 800; font-size: 14px;">Notifications</div>
+                                <button type="button" onclick="markAllNotificationsRead()" style="background: none; border: none; font-size: 11px; font-weight: 700; color: var(--royal-purple); cursor: pointer;">Mark all read</button>
+                            </div>
+                            <div id="notificationItemsContainer" style="max-height: 380px; overflow-y: auto;">
+                                <!-- Populated dynamically by main.js -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dark / Light Mode Toggle (Top-Right, Icon only) -->
+                    <button type="button" class="icon-button" id="themeToggleBtn" title="Toggle Dark/Light Mode">
+                        <i class="fas fa-moon" id="themeToggleIcon"></i>
+                    </button>
+
+                    <!-- User Quick Avatar -->
+                    <div class="user-avatar" style="width: 36px; height: 36px; font-size: 13px;">
+                        {{ session.get('full_name', 'U')[0] }}
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content Body -->
+            <div class="content-wrapper">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Universal Modals -->
+    <!-- 1. Leave Review Modal (Team Lead) -->
+    <div class="modal-overlay" id="leaveReviewModal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-clipboard-check text-indigo-500 mr-2"></i> Review Leave Request</div>
+                <button type="button" class="modal-close-btn" onclick="closeModal('leaveReviewModal')">&times;</button>
+            </div>
+            <form id="leaveReviewForm" method="POST">
+                <div class="modal-body">
+                    <div style="background: #f8fafc; border-radius: var(--radius-md); padding: 18px; margin-bottom: 20px; border: 1px solid var(--border-light);">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
+                            <div><strong style="color: var(--text-muted);">Employee:</strong> <span id="lrModalEmpName" style="font-weight: 700; color: var(--text-main);"></span></div>
+                            <div><strong style="color: var(--text-muted);">Leave Type:</strong> <span id="lrModalType" style="font-weight: 700; color: var(--royal-purple);"></span></div>
+                            <div style="grid-column: span 2;"><strong style="color: var(--text-muted);">Duration:</strong> <span id="lrModalDates" style="font-weight: 700;"></span></div>
+                            <div style="grid-column: span 2;"><strong style="color: var(--text-muted);">Reason:</strong> <span id="lrModalReason"></span></div>
+                        </div>
+                    </div>
+
+                    <!-- Standout Leave Impact Warning Banner -->
+                    <div id="lrModalImpactBox" class="intelligence-card intelligence-card-warning" style="display: none;">
+                        <i class="fas fa-triangle-exclamation intelligence-icon"></i>
+                        <div>
+                            <div class="intelligence-title">Leave Impact Warning</div>
+                            <div class="intelligence-desc" id="lrModalImpactContent"></div>
+                        </div>
+                    </div>
+
+                    <!-- Rejection Reason Input (Shown if Reject clicked) -->
+                    <div id="rejectionReasonBox" style="display: none; margin-top: 14px;">
+                        <label class="form-label" style="color: var(--danger-dark);">Reason for Rejection (Optional but recommended):</label>
+                        <input type="text" name="rejection_reason" id="rejectionReasonInput" class="form-control" placeholder="e.g. Critical project deadline conflict during requested dates">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('leaveReviewModal')">Cancel</button>
+                    <!-- Red Reject Button -->
+                    <button type="submit" name="action" value="reject" class="btn btn-reject">
+                        <i class="fas fa-xmark"></i> Reject Leave
+                    </button>
+                    <!-- Green Accept Button -->
+                    <button type="submit" name="action" value="accept" class="btn btn-accept">
+                        <i class="fas fa-check"></i> Accept Leave
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. Task Completion Confirmation Modal (Employee) -->
+    <div class="modal-overlay" id="completeTaskModal">
+        <div class="modal-dialog" style="max-width: 480px;">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-circle-check text-emerald-500 mr-2"></i> Mark Task Completed</div>
+                <button type="button" class="modal-close-btn" onclick="closeModal('completeTaskModal')">&times;</button>
+            </div>
+            <form id="completeTaskForm" method="POST" action="{{ url_for('employee.tasks') }}">
+                <input type="hidden" name="task_id" id="completeTaskIdInput">
+                <input type="hidden" name="progress" value="100">
+                <input type="hidden" name="status" value="Completed">
+                <div class="modal-body" style="text-align: center; padding: 32px 24px;">
+                    <div style="width: 64px; height: 64px; border-radius: var(--radius-full); background: var(--success-light); color: var(--success); display: inline-flex; align-items: center; justify-content: center; font-size: 32px; margin-bottom: 16px;">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">Mark this task as completed?</h3>
+                    <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;" id="completeTaskTitle"></p>
+                    <div class="form-group" style="text-align: left;">
+                        <label class="form-label">Completion Remarks (Optional):</label>
+                        <input type="text" name="remarks" class="form-control" placeholder="All requirements fulfilled, PR merged & verified.">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('completeTaskModal')">Cancel</button>
+                    <button type="submit" class="btn btn-accept">
+                        <i class="fas fa-check-double"></i> Confirm Completion
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. Task Reassignment Modal (Team Lead) -->
+    <div class="modal-overlay" id="reassignTaskModal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-arrows-rotate text-blue-500 mr-2"></i> Reassign Task</div>
+                <button type="button" class="modal-close-btn" onclick="closeModal('reassignTaskModal')">&times;</button>
+            </div>
+            <form id="reassignTaskForm" method="POST">
+                <div class="modal-body">
+                    <p style="font-size: 14px; margin-bottom: 16px;">
+                        Reassigning: <strong id="reassignTaskTitle" style="color: var(--primary);"></strong><br>
+                        Current Owner: <span id="reassignCurrentAssignee" class="badge badge-secondary"></span>
+                    </p>
+                    <div class="form-group">
+                        <label class="form-label">Select New Assignee:</label>
+                        <select name="new_employee_id" class="form-control" required>
+                            <option value="">-- Choose Team Member --</option>
+                            {% if members %}
+                                {% for m in members %}
+                                    <option value="{{ m.id }}">{{ m.full_name }} ({{ m.designation }})</option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Reassignment Rationale:</label>
+                        <input type="text" name="reason" class="form-control" placeholder="e.g. Workload balancing / specialization fit" value="Workload balancing">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('reassignTaskModal')">Cancel</button>
+                    <button type="submit" class="btn btn-blue">
+                        <i class="fas fa-paper-plane"></i> Confirm Reassignment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Flash Messages Rendered to Toasts -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    {% for category, message in messages %}
+                        showToast("{{ category.capitalize() }}", "{{ message }}", "{{ category }}");
+                    {% endfor %}
+                });
+            </script>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Core Scripts -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Ensure notifications toggle works cleanly
+        document.getElementById('notificationBellBtn')?.addEventListener('click', () => {
+            const dropdown = document.getElementById('notificationDropdown');
+            if (dropdown) {
+                dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

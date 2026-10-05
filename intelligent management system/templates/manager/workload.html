@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Workload Allocation & Intelligence | Manager{% endblock %}
+{% block page_title %}Team Workload Allocation Intelligence{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 24px;">
+    <h2 style="font-size: 24px; font-weight: 800;">Cross-Team Workload Allocation</h2>
+    <p style="font-size: 13px; color: var(--text-muted);">Macro-level distribution of engineering capacity, identifying over-allocated teams and reallocation opportunities.</p>
+</div>
+
+<div class="card-3d" style="padding: 0; overflow: hidden;">
+    <div class="table-container" style="border: none;">
+        <table class="saas-table">
+            <thead>
+                <tr>
+                    <th>Team Name</th>
+                    <th>Division</th>
+                    <th>Staff Size</th>
+                    <th>Assigned Load %</th>
+                    <th>Active Tasks</th>
+                    <th>Delayed Tasks</th>
+                    <th>Capacity Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tc in teams_comparison %}
+                    <tr>
+                        <td style="font-weight: 700; font-size: 14px;">{{ tc.team.name }}</td>
+                        <td><span class="badge badge-purple">{{ tc.team.department.name }}</span></td>
+                        <td>{{ tc.member_count }} engineers</td>
+                        <td style="min-width: 180px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 4px;">
+                                <span>{{ tc.assigned_pct }}%</span>
+                            </div>
+                            <div class="progress-track" style="height: 8px;">
+                                <div class="progress-fill {{ 'progress-fill-danger' if tc.assigned_pct > 90 else ('progress-fill-warning' if tc.assigned_pct > 75 else 'progress-fill-success') }}" style="width: {{ min(100, tc.assigned_pct) }}%;"></div>
+                            </div>
+                        </td>
+                        <td><strong>{{ tc.active_tasks }}</strong></td>
+                        <td><strong style="color: {{ 'var(--danger)' if tc.delayed_tasks > 0 else 'var(--text-muted)' }};">{{ tc.delayed_tasks }}</strong></td>
+                        <td>
+                            <span class="badge {{ 'badge-danger' if tc.assigned_pct > 90 else ('badge-warning' if tc.assigned_pct > 75 else 'badge-success') }}">
+                                {{ tc.status }}
+                            </span>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

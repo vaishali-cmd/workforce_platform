@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+
+{% block title %}Employee Workforce Directory{% endblock %}
+{% block page_title %}Employee Management{% endblock %}
+
+{% block content %}
+<div
+    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+    <div>
+        <h2 style="font-size: 24px; font-weight: 800;">Workforce Directory</h2>
+        <p style="font-size: 13px; color: var(--text-muted);">Configure team members, role assignments, department
+            affiliations, and technical skills.</p>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="openModal('addEmployeeModal')">
+        <i class="fas fa-plus"></i> Add New Employee
+    </button>
+</div>
+
+<!-- Search & Filtering Bar -->
+<div class="card-3d" style="padding: 16px 20px; margin-bottom: 24px;">
+    <form method="GET" action="{{ url_for('admin.employees') }}"
+        style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 220px; position: relative;">
+            <i class="fas fa-search" style="position: absolute; left: 14px; top: 13px; color: var(--text-subtle);"></i>
+            <input type="text" name="search" class="form-control" style="padding-left: 38px;"
+                placeholder="Search employee name, code, or role..." value="{{ search_query }}">
+        </div>
+
+        <div style="min-width: 180px;">
+            <select name="dept" class="form-control" onchange="this.form.submit()">
+                <option value="">All Departments</option>
+                {% for d in departments %}
+                <option value="{{ d.id }}" {{ 'selected' if selected_dept|string==d.id|string else '' }}>{{ d.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="min-width: 150px;">
+            <select name="status" class="form-control" onchange="this.form.submit()">
+                <option value="">All Statuses</option>
+                <option value="Active" {{ 'selected' if selected_status=='Active' else '' }}>Active</option>
+                <option value="Inactive" {{ 'selected' if selected_status=='Inactive' else '' }}>Inactive</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-blue btn-sm">Filter</button>
+        {% if search_query or selected_dept or selected_status %}
+        <a href="{{ url_for('admin.employees') }}" class="btn btn-outline btn-sm">Reset</a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Employees Data Table -->
+<div class="card-3d" style="padding: 0; overflow: hidden;">
+    {% if employees %}
+    <div class="table-container" style="border: none;">
+        <table class="saas-table">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Role & Title</th>
+                    <th>Department / Team</th>
+                    <th>Skills</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employees %}
+                <tr>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div class="user-avatar" style="width: 38px; height: 38px;">
+                                {{ emp.full_name[0] }}
+                            </div>
+                            <div>
+                                <div style="font-weight: 700; font-size: 14px;">{{ emp.full_name }}</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">
+                                    <span
+                                        style="font-family: monospace; font-weight: 700; color: var(--royal-purple);">{{
+                                        emp.emp_code }}</span> &bull; {{ emp.email }}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-weight: 600;">{{ emp.designation or 'Team Member' }}</div>
+                        <span class="badge role-pill-{{ emp.role_name }}"
+                            style="padding: 2px 8px; font-size: 10px; margin-top: 4px;">
+                            {{ emp.role_name.replace('_', ' ') }}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="font-weight: 600;">{{ emp.department.name if emp.department else '—' }}</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">{{ emp.team.name if emp.team else 'No Team Assigned' }}</div>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 4px; flex-wrap: wrap; max-width: 260px;">
+                            {% for es in emp.skills[:3] %}
+                            <span class="badge badge-secondary" style="font-size: 10px;">{{ es.skill.name }}</span>
+                            {% endfor %}
+                            {% if emp.skills|length > 3 %}
+                            <span class="badge badge-purple" style="font-size: 10px;">+{{ emp.skills|length - 3 }}</span>
+
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge {{ 'badge-success' if emp.status == 'Active' else 'badge-danger' }}">
+                            {{ emp.status }}
+                        </span>
+                    </td>
+                    <td style="text-align: right;">
+                        <div style="display: inline-flex; gap: 8px;">
+                            <!-- Edit Trigger Button -->
+                            <button type="button" class="btn btn-sm btn-outline"
+                                onclick="openEditEmployeeModal({{ emp.id }}, '{{ emp.full_name }}', '{{ emp.phone or '' }}', '{{ emp.designation or '' }}', '{{ emp.department_id or '' }}', '{{ emp.team_id or '' }}', '{{ emp.manager_id or '' }}', '{{ emp.team_lead_id or '' }}', '{{ emp.role_name }}')">
+                                <i class="fas fa-pen-to-square"></i> Edit
+                            </button>
+
+                            <!-- Status Toggle Button -->
+                            <form method="POST" action="{{ url_for('admin.employees') }}" style="display: inline;">
+                                <input type="hidden" name="action" value="toggle_status">
+                                <input type="hidden" name="employee_id" value="{{ emp.id }}">
+                                {% if emp.status == 'Active' %}
+                                <button type="submit" class="btn btn-sm btn-outline" style="color: var(--danger);"
+                                    title="Deactivate account"
+                                    onclick="return confirm('Deactivate account for {{ emp.full_name }}?')">
+                                    <i class="fas fa-user-slash"></i>
+                                </button>
+                                {% else %}
+                                <button type="submit" class="btn btn-sm btn-outline" style="color: var(--success);"
+                                    title="Reactivate account">
+                                    <i class="fas fa-user-check"></i>
+                                </button>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 48px; color: var(--text-muted);">
+        <i class="fas fa-user-xmark"
+            style="font-size: 36px; margin-bottom: 12px; display: block; color: var(--text-subtle);"></i>
+        <h3>No employees found matching filter</h3>
+        <p style="font-size: 13px; margin-top: 4px;">Try refining search parameters or register a new team member.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal 1: Add New Employee -->
+<div class="modal-overlay" id="addEmployeeModal">
+    <div class="modal-dialog" style="max-width: 650px;">
+        <div class="modal-header">
+            <div class="modal-title"><i class="fas fa-user-plus text-indigo-500 mr-2"></i> Register New Workforce Member
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeModal('addEmployeeModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('admin.employees') }}">
+            <input type="hidden" name="action" value="add">
+            <div class="modal-body" style="max-height: 520px; overflow-y: auto;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label class="form-label">Full Name *</label>
+                        <input type="text" name="full_name" class="form-control" placeholder="e.g. Johnathan Doe"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Work Email *</label>
+                        <input type="email" name="email" class="form-control" placeholder="e.g. j.doe@workforce.com"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Employee Code *</label>
+                        <input type="text" name="emp_code" class="form-control" placeholder="e.g. EMP-009" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">System Role *</label>
+                        <select name="role_name" class="form-control" required>
+                            <option value="employee">Employee</option>
+                            <option value="team_lead">Team Lead</option>
+                            <option value="manager">Manager</option>
+                            <option value="admin">HR / Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Department</label>
+                        <select name="department_id" class="form-control">
+                            <option value="">-- Select Department --</option>
+                            {% for d in departments %}
+                            <option value="{{ d.id }}">{{ d.name }} ({{ d.code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Team</label>
+                        <select name="team_id" class="form-control">
+                            <option value="">-- Select Team --</option>
+                            {% for t in teams %}
+                            <option value="{{ t.id }}">{{ t.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Designation / Title</label>
+                        <input type="text" name="designation" class="form-control" placeholder="e.g. Backend Engineer">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone Number</label>
+                        <input type="text" name="phone" class="form-control" placeholder="+1 (555) 000-0000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Manager</label>
+                        <select name="manager_id" class="form-control">
+                            <option value="">-- Direct Manager --</option>
+                            {% for m in managers %}
+                            <option value="{{ m.id }}">{{ m.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Team Lead</label>
+                        <select name="team_lead_id" class="form-control">
+                            <option value="">-- Direct Team Lead --</option>
+                            {% for tl in team_leads %}
+                            <option value="{{ tl.id }}">{{ tl.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="form-label">Initial Password</label>
+                        <input type="password" name="password" class="form-control" value="workforce123" required>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 8px;">
+                    <label class="form-label">Primary Technical & Domain Skills</label>
+                    <div
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; max-height: 120px; overflow-y: auto; padding: 8px; border: 1px solid var(--border-light); border-radius: var(--radius-sm); background: #f8fafc;">
+                        {% for s in skills %}
+                        <label style="font-size: 12px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="checkbox" name="skills" value="{{ s.id }}">
+                            <span>{{ s.name }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('addEmployeeModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Create Employee</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal 2: Edit Employee -->
+<div class="modal-overlay" id="editEmployeeModal">
+    <div class="modal-dialog" style="max-width: 600px;">
+        <div class="modal-header">
+            <div class="modal-title"><i class="fas fa-user-pen text-indigo-500 mr-2"></i> Edit Employee Profile</div>
+            <button type="button" class="modal-close-btn" onclick="closeModal('editEmployeeModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('admin.employees') }}">
+            <input type="hidden" name="action" value="edit">
+            <input type="hidden" name="employee_id" id="editEmpId">
+            <div class="modal-body" style="max-height: 480px; overflow-y: auto;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" name="full_name" id="editFullName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Designation</label>
+                        <input type="text" name="designation" id="editDesignation" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input type="text" name="phone" id="editPhone" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Department</label>
+                        <select name="department_id" id="editDeptId" class="form-control">
+                            <option value="">-- None --</option>
+                            {% for d in departments %}
+                            <option value="{{ d.id }}">{{ d.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Team</label>
+                        <select name="team_id" id="editTeamId" class="form-control">
+                            <option value="">-- None --</option>
+                            {% for t in teams %}
+                            <option value="{{ t.id }}">{{ t.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Role</label>
+                        <select name="role_name" id="editRoleName" class="form-control">
+                            <option value="employee">Employee</option>
+                            <option value="team_lead">Team Lead</option>
+                            <option value="manager">Manager</option>
+                            <option value="admin">HR / Admin</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('editEmployeeModal')">Cancel</button>
+                <button type="submit" class="btn btn-blue"><i class="fas fa-save"></i> Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openEditEmployeeModal(id, name, phone, designation, deptId, teamId, mgrId, leadId, role) {
+        document.getElementById('editEmpId').value = id;
+        document.getElementById('editFullName').value = name;
+        document.getElementById('editPhone').value = phone;
+        document.getElementById('editDesignation').value = designation;
+        document.getElementById('editDeptId').value = deptId;
+        document.getElementById('editTeamId').value = teamId;
+        document.getElementById('editRoleName').value = role;
+        openModal('editEmployeeModal');
+    }
+</script>
+{% endblock %}

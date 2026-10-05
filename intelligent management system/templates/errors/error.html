@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} | Workforce Intelligence{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 580px; margin: 60px auto; text-align: center;">
+    <div class="card-3d" style="padding: 48px 32px;">
+        <div style="width: 80px; height: 80px; border-radius: var(--radius-full); background: var(--neon-pink-light); color: var(--neon-pink); display: inline-flex; align-items: center; justify-content: center; font-size: 36px; margin-bottom: 20px;">
+            <i class="fas fa-shield-cat"></i>
+        </div>
+        <h1 style="font-size: 48px; font-weight: 800; background: var(--grad-pink-purple); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px;">
+            {{ code }}
+        </h1>
+        <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 12px; color: var(--text-main);">
+            {{ title }}
+        </h2>
+        <p style="font-size: 15px; color: var(--text-muted); margin-bottom: 28px; line-height: 1.6;">
+            {{ message }}
+        </p>
+        <div style="display: flex; justify-content: center; gap: 14px;">
+            <a href="javascript:history.back()" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Go Back
+            </a>
+            <a href="{{ url_for('auth.index') }}" class="btn btn-primary">
+                <i class="fas fa-house"></i> Return to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

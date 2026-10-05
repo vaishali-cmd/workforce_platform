@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Workforce Attendance Log | Admin{% endblock %}
+{% block page_title %}Organization Attendance Intelligence{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+    <div>
+        <h2 style="font-size: 24px; font-weight: 800;">Organization Attendance Logs</h2>
+        <p style="font-size: 13px; color: var(--text-muted);">Monitor daily shifts, punctuality trends, working hours, and clock-in events.</p>
+    </div>
+    
+    <!-- Date picker -->
+    <form method="GET" action="{{ url_for('admin.attendance') }}" style="display: flex; gap: 10px; align-items: center;">
+        <label style="font-size: 13px; font-weight: 700; color: var(--text-muted);">Date:</label>
+        <input type="date" name="date" class="form-control" value="{{ selected_date }}" onchange="this.form.submit()" style="padding: 8px 12px; font-weight: 600;">
+    </form>
+</div>
+
+<!-- Attendance KPI Summary -->
+<div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+    <div class="metric-card">
+        <div class="metric-icon-box bg-emerald-grad">
+            <i class="fas fa-users-check"></i>
+        </div>
+        <div class="metric-info">
+            <div class="metric-value">{{ attendances|length }}</div>
+            <div class="metric-label">Clocked In on Date</div>
+        </div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-icon-box bg-sunset-grad">
+            <i class="fas fa-user-xmark"></i>
+        </div>
+        <div class="metric-info">
+            <div class="metric-value">{{ not_checked_in|length }}</div>
+            <div class="metric-label">Pending / Absent</div>
+        </div>
+    </div>
+</div>
+
+<div class="card-3d" style="padding: 0; overflow: hidden; margin-bottom: 28px;">
+    <div style="padding: 18px 24px; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="font-size: 16px; font-weight: 800;">
+            <i class="fas fa-list-check text-indigo-500 mr-2"></i> Clock-In Activity for {{ selected_date | format_date('%A, %d %B %Y') }}
+        </h3>
+        <span class="badge badge-primary">{{ attendances|length }} Recorded Events</span>
+    </div>
+
+    {% if attendances %}
+        <div class="table-container" style="border: none;">
+            <table class="saas-table">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Department</th>
+                        <th>Check In</th>
+                        <th>Check Out</th>
+                        <th>Total Hours</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in attendances %}
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div class="user-avatar" style="width: 34px; height: 34px; font-size: 12px;">
+                                        {{ a.employee.full_name[0] }}
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 700;">{{ a.employee.full_name }}</div>
+                                        <div style="font-size: 11px; color: var(--text-muted);">{{ a.employee.emp_code }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ a.employee.department.name if a.employee.department else '—' }}</td>
+                            <td>
+                                <span style="font-family: monospace; font-weight: 700; color: var(--success-dark);">
+                                    <i class="fas fa-arrow-right-to-bracket text-emerald-500 mr-1"></i> {{ a.check_in.strftime('%I:%M %p') if a.check_in else '—' }}
+                                </span>
+                            </td>
+                            <td>
+                                <span style="font-family: monospace; font-weight: 700; color: var(--text-muted);">
+                                    <i class="fas fa-arrow-right-from-bracket text-rose-500 mr-1"></i> {{ a.check_out.strftime('%I:%M %p') if a.check_out else 'Active Shift' }}
+                                </span>
+                            </td>
+                            <td>
+                                <strong style="color: var(--primary);">{{ a.working_hours }}h</strong>
+                            </td>
+                            <td>
+                                <span class="badge {{ a.status_badge_class }}">
+                                    {{ a.status }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 48px; color: var(--text-muted);">
+            <i class="far fa-calendar-xmark" style="font-size: 36px; margin-bottom: 12px; display: block; color: var(--text-subtle);"></i>
+            <h4>No attendance records recorded for this date.</h4>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

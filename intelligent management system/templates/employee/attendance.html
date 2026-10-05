@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+
+{% block title %}Clock In / Attendance | Employee{% endblock %}
+{% block page_title %}Attendance &amp; Shift Management{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+    <div>
+        <h2 style="font-size: 24px; font-weight: 800;">Shift &amp; Clock-in Center &bull; {{ employee.full_name }}</h2>
+        <p style="font-size: 13px; color: var(--text-muted);">Record daily work shift times, log check-in/out stamps, and audit past attendance history.</p>
+    </div>
+    <a href="{{ url_for('employee.dashboard') }}" class="btn btn-outline">
+        <i class="fas fa-house-user mr-1"></i> My Workspace
+    </a>
+</div>
+
+<!-- Clock In / Clock Out Action Cards -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px;">
+    <!-- Today Shift Status Card -->
+    <div class="card-3d">
+        <div class="card-gradient-top"></div>
+        <h3 style="font-size: 17px; font-weight: 800; margin-bottom: 16px;">
+            <i class="fas fa-clock text-indigo-500 mr-2"></i> Today's Shift Details ({{ today_date | format_date }})
+        </h3>
+
+        <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 18px; margin-bottom: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                    <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Check-In Time</div>
+                    <div style="font-size: 20px; font-weight: 800; color: var(--text-main); font-family: Outfit; margin-top: 4px;">
+                        {% if today_att and today_att.check_in %}
+                            <i class="fas fa-circle-check text-emerald-500 mr-1" style="font-size: 16px;"></i>
+                            {{ today_att.check_in.strftime('%I:%M %p') }}
+                        {% else %}
+                            <span style="color: var(--text-muted); font-size: 16px;">Not Checked In</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div>
+                    <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Check-Out Time</div>
+                    <div style="font-size: 20px; font-weight: 800; color: var(--text-main); font-family: Outfit; margin-top: 4px;">
+                        {% if today_att and today_att.check_out %}
+                            <i class="fas fa-circle-check text-emerald-500 mr-1" style="font-size: 16px;"></i>
+                            {{ today_att.check_out.strftime('%I:%M %p') }}
+                        {% else %}
+                            <span style="color: var(--text-muted); font-size: 16px;">—</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div style="grid-column: span 2; border-top: 1px solid var(--border-light); padding-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span style="font-size: 12px; color: var(--text-muted);">Logged Hours:</span>
+                        <strong style="font-size: 14px; color: var(--text-main); margin-left: 6px;">
+                            {{ today_att.working_hours if today_att else 0.0 }} hrs
+                        </strong>
+                    </div>
+                    <div>
+                        <span class="badge {{ 'badge-success' if today_att and today_att.status == 'Present' else 'badge-secondary' }}">
+                            {{ today_att.status if today_att else 'Absent / Not Checked In' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 14px;">
+            {% if not today_att or not today_att.check_in %}
+                <form method="POST" action="{{ url_for('employee.attendance') }}" style="flex: 1;">
+                    <input type="hidden" name="action" value="check_in">
+                    <button type="submit" class="btn btn-accept" style="width: 100%; padding: 13px; font-size: 15px; font-weight: 700;">
+                        <i class="fas fa-right-to-bracket mr-2"></i> Clock In Now
+                    </button>
+                </form>
+            {% elif not today_att.check_out %}
+                <form method="POST" action="{{ url_for('employee.attendance') }}" style="flex: 1;">
+                    <input type="hidden" name="action" value="check_out">
+                    <button type="submit" class="btn btn-reject" style="width: 100%; padding: 13px; font-size: 15px; font-weight: 700;">
+                        <i class="fas fa-right-from-bracket mr-2"></i> Clock Out Now
+                    </button>
+                </form>
+            {% else %}
+                <div style="width: 100%; text-align: center; padding: 12px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: var(--radius-sm); color: #065f46; font-weight: 700;">
+                    <i class="fas fa-check-double mr-1"></i> Both Check-In and Check-Out completed for today!
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Attendance Policy & Guidelines -->
+    <div class="card-3d">
+        <div class="card-gradient-top"></div>
+        <h3 style="font-size: 17px; font-weight: 800; margin-bottom: 14px;">
+            <i class="fas fa-shield-halved text-pink-500 mr-2"></i> Shift Attendance Policy
+        </h3>
+        <p style="font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px;">
+            Standard shifts are calculated at 8.0 hours per regular work day. Ensure both check-in and check-out timestamps are logged on the same calendar day for automated timesheet approval.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 24px; height: 24px; border-radius: 6px; background: #d1fae5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                    <i class="fas fa-check"></i>
+                </div>
+                <span>Full Day threshold: <strong>&ge; 7.5 hours</strong></span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 24px; height: 24px; border-radius: 6px; background: #fef3c7; color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <span>Half Day threshold: <strong>4.0 &ndash; 7.4 hours</strong></span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 24px; height: 24px; border-radius: 6px; background: #ede9fe; color: #7c3aed; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                    <i class="fas fa-umbrella-beach"></i>
+                </div>
+                <span>Need time off? <a href="{{ url_for('employee.leaves') }}" style="color: var(--primary); font-weight: 700; text-decoration: underline;">Submit leave request</a></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Past 30 Days Attendance History -->
+<div class="card-3d" style="padding: 0; overflow: hidden;">
+    <div style="padding: 18px 24px; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h3 style="font-size: 17px; font-weight: 800;">Recent Attendance History</h3>
+            <p style="font-size: 12px; color: var(--text-muted);">Past 30 shift logs and hours calculation audit.</p>
+        </div>
+    </div>
+
+    {% if history %}
+        <div class="table-container" style="border: none;">
+            <table class="saas-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Check-In</th>
+                        <th>Check-Out</th>
+                        <th>Working Hours</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rec in history %}
+                        <tr>
+                            <td>
+                                <div style="font-weight: 700;">{{ rec.date | format_date('%d %b %Y') }}</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">{{ rec.date.strftime('%A') }}</div>
+                            </td>
+                            <td>
+                                {{ rec.check_in.strftime('%I:%M %p') if rec.check_in else '—' }}
+                            </td>
+                            <td>
+                                {{ rec.check_out.strftime('%I:%M %p') if rec.check_out else '—' }}
+                            </td>
+                            <td>
+                                <strong style="color: var(--text-main);">{{ rec.working_hours }}h</strong>
+                            </td>
+                            <td>
+                                <span class="badge {{ 'badge-success' if rec.status == 'Present' else ('badge-warning' if rec.status == 'Half Day' else 'badge-danger') }}">
+                                    {{ rec.status }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 48px; color: var(--text-muted);">
+            <i class="fas fa-calendar-xmark" style="font-size: 36px; margin-bottom: 12px; display: block; color: var(--text-subtle);"></i>
+            <h4>No attendance logs found in history.</h4>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

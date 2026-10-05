@@ -1,0 +1,23 @@
+/* Dashboard Custom Styles */
+
+/* Custom cursor for dashboard pages */
+body.dashboard {
+    cursor: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNCIgaGVpZ2h0PSIxNCI+PHBhdGggZD0iTTAgMGgxNHYxNEgwVjAiIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMCIvPjwvc3ZnPg=='), auto;
+}
+
+/* Draggable panel styling */
+.draggable-panel {
+    position: absolute;
+    top: 80px;
+    /* start below navbar */
+    left: 20px;
+    width: calc(100% - 40px);
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    padding: 20px;
+    cursor: grab;
+    overflow: auto;
+    border: 1px solid #ddd;
+    z-index: 1000;
+}
